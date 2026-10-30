@@ -382,6 +382,7 @@ const CHANGELOG = [
   { ver: 'เวอร์ชัน 1.1', date: '30 ต.ค. 2569', items: [
     'แอปบน iPhone อัปเดตเป็นเวอร์ชันล่าสุดเองเมื่อเปิดแอป',
     'หน้าเช็กอิน: ช่องข้อมูลการลาแสดงเฉพาะเมื่อเลือก "ลา"',
+    'หน้าเช็กอิน: ป้ายเวลาแบบนาฬิกาพลิก พร้อมวันที่',
     'เพิ่ม "มีอะไรใหม่" ในหน้าตั้งค่า',
     'เอาปุ่มใส่ข้อมูลตัวอย่างออกจากหน้าตั้งค่า',
   ] },
@@ -394,6 +395,9 @@ function viewSettings() {
   const themeL = { system: 'ตามระบบ (สว่าง / มืด)', light: 'สว่าง', dark: 'มืด' }[db.settings.theme];
   return `
   <header class="row" style="gap:12px"><a class="icon-btn" href="#/today" aria-label="ย้อนกลับ">${ic('back')}</a><h1 class="h1" style="font-size:26px">ตั้งค่า</h1></header>
+  <section class="card" style="padding:0;overflow:hidden"><div class="label" style="padding:14px 14px 6px">มีอะไรใหม่</div>
+    <div class="news">${CHANGELOG.map((v) => `<div><div class="ver">${esc(v.ver)}<span class="muted" style="font-size:12px;font-weight:400">${esc(v.date)}</span></div><ul>${v.items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>`).join('')}</div>
+  </section>
   ${stale ? `<div class="card row" style="background:var(--amber-soft);color:var(--amber-ink);gap:12px">${ic('warn', 22)}<div style="font-size:14px"><b>${lb ? `ไม่ได้สำรองข้อมูลมา ${diffDays(lb.slice(0, 10), today())} วัน` : 'ยังไม่เคยสำรองข้อมูล'}</b><br>สำรองไว้กันข้อมูลหายนะ</div></div>` : ''}
   <section class="card" style="padding:0;overflow:hidden"><div class="label" style="padding:14px 14px 6px">ข้อมูล</div>
     ${row('down', 'สำรองข้อมูล', `ไฟล์ JSON · ${lb ? 'ล่าสุด ' + fmtShort(lb.slice(0, 10)) : 'ยังไม่เคย'}`, '<span class="pill-btn" style="background:var(--dark);color:var(--on-dark);border:none;height:36px">สำรองเลย</span>', 'backup')}
@@ -404,9 +408,6 @@ function viewSettings() {
     ${row('moon', 'ธีม', themeL, '', 'cycleTheme')}
     ${row('tags', 'หมวด', 'อินโฟกราฟิก · บทความ', '<span></span>')}
     ${row('home', 'วันทำงาน', 'จ–พฤ ออฟฟิศ · ศุกร์ WFH', '<span></span>')}
-  </section>
-  <section class="card" style="padding:0;overflow:hidden"><div class="label" style="padding:14px 14px 6px">มีอะไรใหม่</div>
-    <div class="news">${CHANGELOG.map((v) => `<div><div class="ver">${esc(v.ver)}<span class="muted" style="font-size:12px;font-weight:400">${esc(v.date)}</span></div><ul>${v.items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>`).join('')}</div>
   </section>
   <section class="card" style="padding:0;overflow:hidden"><div class="label" style="padding:14px 14px 6px">ล้างข้อมูล</div>
     ${row('trash', 'ล้างข้อมูลทั้งหมด', 'สำรองก่อนนะ ลบแล้วกู้ไม่ได้', '', 'wipe')}
