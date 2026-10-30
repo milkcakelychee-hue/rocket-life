@@ -395,8 +395,8 @@ function viewSettings() {
   const themeL = { system: 'ตามระบบ (สว่าง / มืด)', light: 'สว่าง', dark: 'มืด' }[db.settings.theme];
   return `
   <header class="row" style="gap:12px"><a class="icon-btn" href="#/today" aria-label="ย้อนกลับ">${ic('back')}</a><h1 class="h1" style="font-size:26px">ตั้งค่า</h1></header>
-  <section class="card" style="padding:0;overflow:hidden"><div class="label" style="padding:14px 14px 6px">มีอะไรใหม่</div>
-    <div class="news">${CHANGELOG.map((v) => `<div><div class="ver">${esc(v.ver)}<span class="muted" style="font-size:12px;font-weight:400">${esc(v.date)}</span></div><ul>${v.items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>`).join('')}</div>
+  <section class="card" style="padding:0;overflow:hidden">
+    ${row('bell', 'มีอะไรใหม่', `${CHANGELOG[0].ver} · ${CHANGELOG[0].date}`, '', 'whatsNew')}
   </section>
   ${stale ? `<div class="card row" style="background:var(--amber-soft);color:var(--amber-ink);gap:12px">${ic('warn', 22)}<div style="font-size:14px"><b>${lb ? `ไม่ได้สำรองข้อมูลมา ${diffDays(lb.slice(0, 10), today())} วัน` : 'ยังไม่เคยสำรองข้อมูล'}</b><br>สำรองไว้กันข้อมูลหายนะ</div></div>` : ''}
   <section class="card" style="padding:0;overflow:hidden"><div class="label" style="padding:14px 14px 6px">ข้อมูล</div>

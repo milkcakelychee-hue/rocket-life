@@ -285,6 +285,7 @@ const ACT = {
     db.todos.forEach((x) => rows.push(['to-do', x.doneAt || x.date, x.title, '', x.done ? 'เสร็จ' : 'ยังไม่เสร็จ', '', '', '', '', x.note]));
     download(`rocket-life-${today()}.csv`, '﻿' + rows.map((r) => r.map(q).join(',')).join('\n'), 'text/csv');
   },
+  whatsNew: () => openSheet('มีอะไรใหม่', `<div class="news" style="padding:0">${CHANGELOG.map((v) => `<div><div class="ver">${esc(v.ver)}<span class="muted" style="font-size:12px;font-weight:400">${esc(v.date)}</span></div><ul>${v.items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>`).join('')}</div>`),
   sample: () => { loadSample(); save(); render(); toast('ใส่ข้อมูลตัวอย่างแล้ว'); },
   wipe: () => { if (!confirm('ล้างข้อมูลทั้งหมด? (สำรองก่อนแล้วหรือยัง)')) return; db = blank(); save(); render(); },
 };

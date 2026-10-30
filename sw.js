@@ -1,5 +1,5 @@
 // Rocket Life service worker — ใช้ออฟไลน์ได้ (network-first: มีเน็ตโหลดเวอร์ชันล่าสุด ออฟไลน์ใช้ของใน cache)
-const CACHE = 'rocketlife-v5';
+const CACHE = 'rocketlife-v6';
 const ASSETS = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
