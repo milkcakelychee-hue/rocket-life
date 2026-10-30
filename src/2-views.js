@@ -377,6 +377,16 @@ function viewStats() {
 }
 
 /* ---------- ตั้งค่า ---------- */
+/* มีอะไรใหม่ — ใส่เฉพาะฟีเจอร์/การเปลี่ยนแปลงใหญ่ (ไม่ต้องใส่การแก้คำ/ขนาด/สี) ใหม่สุดอยู่บน */
+const CHANGELOG = [
+  { ver: 'เวอร์ชัน 1.1', date: '30 ต.ค. 2569', items: [
+    'แอปบน iPhone อัปเดตเป็นเวอร์ชันล่าสุดเองเมื่อเปิดแอป',
+    'หน้าเช็กอิน: ช่องข้อมูลการลาแสดงเฉพาะเมื่อเลือก "ลา"',
+    'เพิ่ม "มีอะไรใหม่" ในหน้าตั้งค่า',
+    'เอาปุ่มใส่ข้อมูลตัวอย่างออกจากหน้าตั้งค่า',
+  ] },
+  { ver: 'เวอร์ชัน 1.0', date: 'ต.ค. 2569', items: ['เปิดใช้ Rocket Life ครั้งแรก'] },
+];
 function viewSettings() {
   const lb = db.settings.lastBackup;
   const stale = !lb || diffDays(lb.slice(0, 10), today()) > 7;
@@ -395,8 +405,10 @@ function viewSettings() {
     ${row('tags', 'หมวด', 'อินโฟกราฟิก · บทความ', '<span></span>')}
     ${row('home', 'วันทำงาน', 'จ–พฤ ออฟฟิศ · ศุกร์ WFH', '<span></span>')}
   </section>
-  <section class="card" style="padding:0;overflow:hidden"><div class="label" style="padding:14px 14px 6px">ทดลองใช้</div>
-    ${row('folder', 'ใส่ข้อมูลตัวอย่าง', 'ไว้ลองดูหน้าตาแอป (ไม่ลบข้อมูลเดิม)', '', 'sample')}
+  <section class="card" style="padding:0;overflow:hidden"><div class="label" style="padding:14px 14px 6px">มีอะไรใหม่</div>
+    <div class="news">${CHANGELOG.map((v) => `<div><div class="ver">${esc(v.ver)}<span class="muted" style="font-size:12px;font-weight:400">${esc(v.date)}</span></div><ul>${v.items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>`).join('')}</div>
+  </section>
+  <section class="card" style="padding:0;overflow:hidden"><div class="label" style="padding:14px 14px 6px">ล้างข้อมูล</div>
     ${row('trash', 'ล้างข้อมูลทั้งหมด', 'สำรองก่อนนะ ลบแล้วกู้ไม่ได้', '', 'wipe')}
   </section>
   <input type="file" id="restore-file" accept="application/json,.json" class="sr" aria-label="ไฟล์สำรอง">

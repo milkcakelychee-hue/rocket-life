@@ -596,6 +596,16 @@ function viewStats() {
 }
 
 /* ---------- ตั้งค่า ---------- */
+/* มีอะไรใหม่ — ใส่เฉพาะฟีเจอร์/การเปลี่ยนแปลงใหญ่ (ไม่ต้องใส่การแก้คำ/ขนาด/สี) ใหม่สุดอยู่บน */
+const CHANGELOG = [
+  { ver: 'เวอร์ชัน 1.1', date: '30 ต.ค. 2569', items: [
+    'แอปบน iPhone อัปเดตเป็นเวอร์ชันล่าสุดเองเมื่อเปิดแอป',
+    'หน้าเช็กอิน: ช่องข้อมูลการลาแสดงเฉพาะเมื่อเลือก "ลา"',
+    'เพิ่ม "มีอะไรใหม่" ในหน้าตั้งค่า',
+    'เอาปุ่มใส่ข้อมูลตัวอย่างออกจากหน้าตั้งค่า',
+  ] },
+  { ver: 'เวอร์ชัน 1.0', date: 'ต.ค. 2569', items: ['เปิดใช้ Rocket Life ครั้งแรก'] },
+];
 function viewSettings() {
   const lb = db.settings.lastBackup;
   const stale = !lb || diffDays(lb.slice(0, 10), today()) > 7;
@@ -614,8 +624,10 @@ function viewSettings() {
     ${row('tags', 'หมวด', 'อินโฟกราฟิก · บทความ', '<span></span>')}
     ${row('home', 'วันทำงาน', 'จ–พฤ ออฟฟิศ · ศุกร์ WFH', '<span></span>')}
   </section>
-  <section class="card" style="padding:0;overflow:hidden"><div class="label" style="padding:14px 14px 6px">ทดลองใช้</div>
-    ${row('folder', 'ใส่ข้อมูลตัวอย่าง', 'ไว้ลองดูหน้าตาแอป (ไม่ลบข้อมูลเดิม)', '', 'sample')}
+  <section class="card" style="padding:0;overflow:hidden"><div class="label" style="padding:14px 14px 6px">มีอะไรใหม่</div>
+    <div class="news">${CHANGELOG.map((v) => `<div><div class="ver">${esc(v.ver)}<span class="muted" style="font-size:12px;font-weight:400">${esc(v.date)}</span></div><ul>${v.items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>`).join('')}</div>
+  </section>
+  <section class="card" style="padding:0;overflow:hidden"><div class="label" style="padding:14px 14px 6px">ล้างข้อมูล</div>
     ${row('trash', 'ล้างข้อมูลทั้งหมด', 'สำรองก่อนนะ ลบแล้วกู้ไม่ได้', '', 'wipe')}
   </section>
   <input type="file" id="restore-file" accept="application/json,.json" class="sr" aria-label="ไฟล์สำรอง">
@@ -661,7 +673,7 @@ function sheetCheckin() {
   const t = today(); const dow = dateOf(t).getDay();
   const def = dow === 5 ? 'wfh' : 'office';
   openSheet('เริ่มงานวันนี้กันเลยไหม', `<form class="stack" style="gap:18px" data-form="checkin">
-    <label class="field" style="gap:2px"><span class="muted">เวลาเข้างาน · <span style="color:var(--purple-ink);font-weight:600">แตะเพื่อแก้</span></span><input name="in" type="time" value="${nowHM()}" style="font-size:40px;font-weight:700;line-height:1.2;border:none;background:transparent;width:170px;padding:0"></label>
+    <label class="field" style="gap:2px"><span class="muted">เวลาเข้างาน · <span style="color:var(--purple-ink);font-weight:600">แตะเพื่อแก้</span></span><input name="in" type="time" value="${nowHM()}" style="font-size:40px;font-weight:700;line-height:1.2;border:none;background:transparent;width:100%;max-width:260px;padding:0"></label>
     <div class="field"><span class="label">วันนี้ทำงานแบบไหน</span>${optTiles('type', Object.entries(WORKTYPE).map(([k, v]) => [k, v.label, v.icon]), def)}</div>
     <div id="leave-box" class="stack" hidden><div class="field"><span class="label">ประเภท</span>${optTiles('leaveKind', Object.entries(LEAVE_KIND).map(([k, v]) => [k, v]), 'leave', 3)}</div>${fieldH('สาเหตุที่บอก (ถ้ามี)', inputH('reason', '', 'text', 'เช่น ไข้หวัด'))}</div>
     <button class="btn purple">${ic('check', 20, 2.4)}<span>เช็กอิน</span></button>

@@ -38,7 +38,7 @@ function sheetCheckin() {
   const t = today(); const dow = dateOf(t).getDay();
   const def = dow === 5 ? 'wfh' : 'office';
   openSheet('เริ่มงานวันนี้กันเลยไหม', `<form class="stack" style="gap:18px" data-form="checkin">
-    <label class="field" style="gap:2px"><span class="muted">เวลาเข้างาน · <span style="color:var(--purple-ink);font-weight:600">แตะเพื่อแก้</span></span><input name="in" type="time" value="${nowHM()}" style="font-size:40px;font-weight:700;line-height:1.2;border:none;background:transparent;width:170px;padding:0"></label>
+    <label class="field" style="gap:2px"><span class="muted">เวลาเข้างาน · <span style="color:var(--purple-ink);font-weight:600">แตะเพื่อแก้</span></span><input name="in" type="time" value="${nowHM()}" style="font-size:40px;font-weight:700;line-height:1.2;border:none;background:transparent;width:100%;max-width:260px;padding:0"></label>
     <div class="field"><span class="label">วันนี้ทำงานแบบไหน</span>${optTiles('type', Object.entries(WORKTYPE).map(([k, v]) => [k, v.label, v.icon]), def)}</div>
     <div id="leave-box" class="stack" hidden><div class="field"><span class="label">ประเภท</span>${optTiles('leaveKind', Object.entries(LEAVE_KIND).map(([k, v]) => [k, v]), 'leave', 3)}</div>${fieldH('สาเหตุที่บอก (ถ้ามี)', inputH('reason', '', 'text', 'เช่น ไข้หวัด'))}</div>
     <button class="btn purple">${ic('check', 20, 2.4)}<span>เช็กอิน</span></button>
