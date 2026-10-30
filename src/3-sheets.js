@@ -8,7 +8,7 @@ function openSheet(title, body, onMount) {
   const root = $('#sheet-root');
   root.innerHTML = `<div class="sheet-dim" data-act="closeSheet"></div>
   <div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="grab"></div>
-  <div class="between"><h2 class="h2" style="font-size:22px;font-weight:700">${esc(title)}</h2><button class="icon-btn solid" data-act="closeSheet" aria-label="ปิด">${ic('close', 18, 2)}</button></div>
+  <div class="between"><h2 class="h2" style="font-size:21px;font-weight:700;line-height:1.35">${esc(title)}</h2><button class="icon-btn solid" data-act="closeSheet" aria-label="ปิด">${ic('close', 18, 2)}</button></div>
   ${body}</div>`;
   const sh = $('.sheet', root);
   if (onMount) onMount(sh);
@@ -38,10 +38,10 @@ function sheetCheckin() {
   const t = today(); const dow = dateOf(t).getDay();
   const def = dow === 5 ? 'wfh' : 'office';
   openSheet('เริ่มงานวันนี้กันเลยไหม', `<form class="stack" style="gap:18px" data-form="checkin">
-    <label class="row" style="align-items:baseline;gap:8px"><input name="in" type="time" value="${nowHM()}" style="font-size:52px;font-weight:700;border:none;background:transparent;width:190px;padding:0"><span class="muted">เวลาเข้างาน · <span style="color:var(--purple-ink);font-weight:600">แตะเพื่อแก้</span></span></label>
+    <label class="field" style="gap:2px"><span class="muted">เวลาเข้างาน · <span style="color:var(--purple-ink);font-weight:600">แตะเพื่อแก้</span></span><input name="in" type="time" value="${nowHM()}" style="font-size:40px;font-weight:700;line-height:1.2;border:none;background:transparent;width:170px;padding:0"></label>
     <div class="field"><span class="label">วันนี้ทำงานแบบไหน</span>${optTiles('type', Object.entries(WORKTYPE).map(([k, v]) => [k, v.label, v.icon]), def)}</div>
     <div id="leave-box" class="stack" hidden><div class="field"><span class="label">ประเภท</span>${optTiles('leaveKind', Object.entries(LEAVE_KIND).map(([k, v]) => [k, v]), 'leave', 3)}</div>${fieldH('สาเหตุที่บอก (ถ้ามี)', inputH('reason', '', 'text', 'เช่น ไข้หวัด'))}</div>
-    <button class="btn purple">${ic('check', 22, 2)} เช็กอิน</button>
+    <button class="btn purple">${ic('check', 20, 2.4)}<span>เช็กอิน</span></button>
     <button type="button" class="btn ghost" data-act="closeSheet">ไว้ทีหลัง</button></form>`, (sh) => {
     bindOpts(sh);
     sh.addEventListener('optchange', (e) => { if (e.detail.name === 'type') $('#leave-box', sh).hidden = e.detail.v !== 'leave'; });
@@ -204,7 +204,7 @@ function sheetArchiveMonth(y, m) {
   const inM = (k) => k && dateOf(k).getFullYear() === y && dateOf(k).getMonth() === m;
   const ps = db.projects.filter((p) => inM(p.archivedAt || p.doneAt));
   const ts = [...db.tasks, ...db.todos].filter((x) => x.done && inM(x.doneAt));
-  openSheet(`${TH_MON_FULL[m]} ${be(y)}`, `<div class="grid2"><div class="card purple"><b style="font-size:26px">${ps.length}</b><div style="font-size:12px">โปรเจกต์ที่ปิด</div></div><div class="card dark"><b style="font-size:26px">${ts.length}</b><div style="font-size:12px;color:var(--on-dark-2)">งานที่เสร็จ</div></div></div>
+  openSheet(`${TH_MON_FULL[m]} ${be(y)}`, `<div class="grid2"><div class="card purple"><b style="font-size:24px;line-height:1.2">${ps.length}</b><div style="font-size:12px">โปรเจกต์ที่ปิด</div></div><div class="card dark"><b style="font-size:24px;line-height:1.2">${ts.length}</b><div style="font-size:12px;color:var(--on-dark-2)">งานที่เสร็จ</div></div></div>
     <div class="stack">${ps.map((p) => `<a class="lrow" href="#/project/${p.id}" data-act="closeSheet"><span class="av p4">${ic('box', 18, 2)}</span><span class="grow"><span class="t">${esc(p.name)}</span><span class="muted" style="font-size:12px">ปิด ${fmtShort(p.doneAt)} · ${tasksOf(p.id).length} งานย่อย</span></span></a>`).join('') || '<div class="empty">เดือนนี้ไม่มีโปรเจกต์ที่ปิด</div>'}</div>`);
 }
 

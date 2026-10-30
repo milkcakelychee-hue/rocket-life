@@ -267,7 +267,7 @@ function viewToday() {
     const diff = (wkMin - lastMin) / 60;
     status = `<div class="card dark hero">
       <div class="between"><span class="chip" style="background:rgba(255,255,255,.12)">${ic('check', 14, 2)}เลิกงานแล้ว</span><span style="font-size:13px;color:var(--on-dark-2)">${WORKTYPE[log.type]?.label || ''}</span></div>
-      <div class="row" style="gap:24px"><div><div style="font-size:12px;color:var(--on-dark-2)">เช็กอิน</div><div style="font-size:34px;font-weight:700;line-height:1.1">${esc(log.in || '-')}</div></div><div><div style="font-size:12px;color:var(--on-dark-2)">เช็กเอาต์</div><div style="font-size:34px;font-weight:700;line-height:1.1">${esc(log.out || '-')}</div></div></div>
+      <div class="row" style="gap:24px"><div><div style="font-size:12px;color:var(--on-dark-2)">เช็กอิน</div><div style="font-size:28px;font-weight:700;line-height:1.2">${esc(log.in || '-')}</div></div><div><div style="font-size:12px;color:var(--on-dark-2)">เช็กเอาต์</div><div style="font-size:28px;font-weight:700;line-height:1.2">${esc(log.out || '-')}</div></div></div>
       ${log.type !== 'leave' ? `<div style="padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.12)"><div style="font-weight:600">วันนี้อยู่${log.type === 'wfh' ? 'ทำงาน' : 'ออฟฟิศ'} ${fmtDur(logMinutes(log))}</div><div style="font-size:12px;color:var(--on-dark-2)">สัปดาห์นี้รวม ${(wkMin / 60).toFixed(1)} ชม. · ${diff >= 0 ? 'มากกว่า' : 'น้อยกว่า'}สัปดาห์ก่อน ${Math.abs(diff).toFixed(1)} ชม.</div></div>` : ''}
       <div class="grid2"><div style="padding:12px;border-radius:18px;background:var(--purple);color:#1E1E20"><div style="font-size:22px;font-weight:700">${doneN}/${items.length}</div><div style="font-size:12px">to-do ที่ปิดได้</div></div>
       <div style="padding:12px;border-radius:18px;background:rgba(255,255,255,.12)"><div style="font-size:22px;font-weight:700">${items.length - doneN}</div><div style="font-size:12px;color:var(--on-dark-2)">จะเลื่อนไปพรุ่งนี้ให้</div></div></div>
@@ -362,9 +362,9 @@ function viewProject(id) {
     <button class="icon-btn solid" data-act="projectMenu" data-id="${id}" aria-label="เมนูเพิ่มเติม">${ic('more', 20, 3)}</button></div></header>
   <section class="card dark hero">
     <div class="row" style="flex-wrap:wrap">${statusChip(p.status)}${priChip(p.priority)}</div>
-    <div style="font-size:24px;font-weight:700;line-height:1.35">${esc(p.name)}</div>
+    <div style="font-size:22px;font-weight:700;line-height:1.4">${esc(p.name)}</div>
     ${p.desc ? `<div style="font-size:14px;color:var(--on-dark-2)">${esc(p.desc)}</div>` : ''}
-    <div class="row" style="gap:14px"><div style="flex:1"><div class="bar" style="height:8px;background:rgba(255,255,255,.2)"><i style="width:${Math.round(pr * 100)}%;background:var(--purple)"></i></div><div style="font-size:12px;color:var(--on-dark-2);margin-top:6px">งานย่อยเสร็จ ${ts.filter((x) => x.done).length} จาก ${ts.length}</div></div><div style="font-size:32px;font-weight:700">${Math.round(pr * 100)}%</div></div>
+    <div class="row" style="gap:14px"><div style="flex:1"><div class="bar" style="height:8px;background:rgba(255,255,255,.2)"><i style="width:${Math.round(pr * 100)}%;background:var(--purple)"></i></div><div style="font-size:12px;color:var(--on-dark-2);margin-top:6px">งานย่อยเสร็จ ${ts.filter((x) => x.done).length} จาก ${ts.length}</div></div><div style="font-size:28px;font-weight:700;line-height:1.2">${Math.round(pr * 100)}%</div></div>
     <div class="grid3"><div style="padding:10px;border-radius:16px;background:rgba(255,255,255,.1)"><div style="font-size:11px;color:var(--on-dark-2)">เริ่ม</div><b style="font-size:14px">${fmtShort(p.start) || '-'}</b></div>
     <div style="padding:10px;border-radius:16px;background:var(--purple);color:#1E1E20"><div style="font-size:11px">กำหนดส่ง</div><b style="font-size:14px">${fmtShort(p.due) || '-'}</b></div>
     <div style="padding:10px;border-radius:16px;background:rgba(255,255,255,.1)"><div style="font-size:11px;color:var(--on-dark-2)">หมวด</div><b style="font-size:13px">${esc(cats)}</b></div></div>
@@ -404,9 +404,9 @@ function viewArchive() {
   <header class="row" style="gap:12px"><a class="icon-btn" href="#/projects" aria-label="ย้อนกลับ">${ic('back')}</a><h1 class="h1" style="font-size:26px">Archive</h1></header>
   <div class="timeline">${tl}</div>
   <div class="card dark grid3" style="padding:18px;border-radius:24px">
-    <div><div style="font-size:28px;font-weight:700;color:var(--purple)">${sum.projects.length}</div><div style="font-size:12px;color:var(--on-dark-2)">โปรเจกต์ที่ปิด</div></div>
-    <div><div style="font-size:28px;font-weight:700">${sum.tasks}</div><div style="font-size:12px;color:var(--on-dark-2)">งานที่เสร็จ</div></div>
-    <div><div style="font-size:28px;font-weight:700">${newPlaces}</div><div style="font-size:12px;color:var(--on-dark-2)">สถานที่ใหม่</div></div></div>
+    <div><div style="font-size:26px;font-weight:700;line-height:1.2;color:var(--purple)">${sum.projects.length}</div><div style="font-size:12px;color:var(--on-dark-2)">โปรเจกต์ที่ปิด</div></div>
+    <div><div style="font-size:26px;font-weight:700;line-height:1.2">${sum.tasks}</div><div style="font-size:12px;color:var(--on-dark-2)">งานที่เสร็จ</div></div>
+    <div><div style="font-size:26px;font-weight:700;line-height:1.2">${newPlaces}</div><div style="font-size:12px;color:var(--on-dark-2)">สถานที่ใหม่</div></div></div>
   <div class="between"><b>งานที่เสร็จรายเดือน</b><span class="row muted" style="gap:4px;font-size:11px">น้อย${['#F3ECFD', '#E2D2FA', '#C9A7F5', '#8E62D0'].map((c) => `<i style="display:inline-block;width:16px;height:10px;border-radius:3px;background:${c}"></i>`).join('')}มาก</span></div>
   <div class="months">${months}</div>
   <div class="muted" style="text-align:center">แตะเดือนเพื่อดูโปรเจกต์และงานที่เสร็จในเดือนนั้น</div>`;
@@ -511,9 +511,9 @@ function viewPlace(id) {
   <section class="card dark hero">
     <b style="font-size:13px;color:var(--purple)">วิธีไป</b>
     <div class="row" style="gap:14px"><span class="av" style="width:56px;height:56px;border-radius:18px;background:${tr.color};color:#fff">${ic('train', 28)}</span>
-      <div><div style="font-size:13px;font-weight:600">${tr.label}${x.line ? ' ' + esc(x.line) : ''}</div><div style="font-size:28px;font-weight:700;line-height:1.2">${esc(x.station || '-')}</div></div></div>
-    <div class="grid2"><div style="padding:14px;border-radius:20px;background:var(--purple);color:#1E1E20"><div style="font-size:12px">ทางออก</div><div style="font-size:40px;font-weight:700;line-height:1.1">${esc(x.exit || '-')}</div></div>
-      <div style="padding:14px;border-radius:20px;background:rgba(255,255,255,.1)"><div style="font-size:12px;color:var(--on-dark-2)">เดินต่อ</div><div style="font-size:26px;font-weight:700;line-height:1.3">${x.walk ? '~' + esc(x.walk) + ' นาที' : '-'}</div></div></div>
+      <div><div style="font-size:13px;font-weight:600">${tr.label}${x.line ? ' ' + esc(x.line) : ''}</div><div style="font-size:24px;font-weight:700;line-height:1.35">${esc(x.station || '-')}</div></div></div>
+    <div class="grid2"><div style="padding:14px;border-radius:20px;background:var(--purple);color:#1E1E20"><div style="font-size:12px">ทางออก</div><div style="font-size:34px;font-weight:700;line-height:1.2">${esc(x.exit || '-')}</div></div>
+      <div style="padding:14px;border-radius:20px;background:rgba(255,255,255,.1)"><div style="font-size:12px;color:var(--on-dark-2)">เดินต่อ</div><div style="font-size:22px;font-weight:700;line-height:1.4">${x.walk ? '~' + esc(x.walk) + ' นาที' : '-'}</div></div></div>
     ${steps.map((s, i) => `<div class="row" style="align-items:flex-start;gap:12px"><span class="av" style="width:24px;height:24px;font-size:12px;background:rgba(255,255,255,.15)">${i + 1}</span><div>${esc(s)}</div></div>`).join('')}
   </section>
   <div class="grid2">${box('card', 'แลกบัตร', x.card)}${box('lift', 'ลิฟต์', x.lift)}${box('coin', 'ค่าโดยสาร', x.fare)}${box('parking', 'ที่จอดรถ', x.parking)}</div>
@@ -531,7 +531,7 @@ function viewPerson(id) {
     <button class="icon-btn" data-act="openPerson" data-id="${id}" aria-label="แก้ไขข้อมูลคน">${ic('edit')}</button></header>
   <section class="card purple hero">
     <div class="row" style="gap:14px"><span class="av" style="width:64px;height:64px;background:#2B2B2E;color:#C9A7F5;font-size:26px">${esc((x.name || '?').trim()[0])}</span>
-      <div><div style="font-size:24px;font-weight:700;line-height:1.25">${esc(x.name)}</div>${x.nickname ? `<div>ชื่อเล่น ${esc(x.nickname)}</div>` : ''}</div></div>
+      <div><div style="font-size:22px;font-weight:700;line-height:1.4">${esc(x.name)}</div>${x.nickname ? `<div>ชื่อเล่น ${esc(x.nickname)}</div>` : ''}</div></div>
     <div class="grid2"><div style="padding:12px;border-radius:18px;background:rgba(255,255,255,.55)"><div style="font-size:12px">องค์กร</div><b>${esc(x.org || '-')}</b></div><div style="padding:12px;border-radius:18px;background:rgba(255,255,255,.55)"><div style="font-size:12px">ตำแหน่ง</div><b>${esc(x.role || '-')}</b></div></div>
   </section>
   ${x.looks ? `<div class="card"><div class="row label">${ic('eye', 18)}หน้าตา / จุดสังเกต</div><div style="margin-top:6px">${esc(x.looks)}</div></div>` : ''}
@@ -580,7 +580,7 @@ function viewStats() {
   <header class="top"><h1 class="h1">สถิติ</h1><button class="icon-btn" data-act="exportCsv" aria-label="ส่งออกข้อมูล">${ic('up')}</button></header>
   <div class="seg" role="tablist">${['week', 'month', 'year'].map((x) => `<button role="tab" class="${x === k ? 'on' : ''}" data-act="statPeriod" data-k="${x}">${{ week: 'สัปดาห์', month: 'เดือน', year: 'ปี' }[x]}</button>`).join('')}</div>
   <section class="card dark hero">
-    <div class="between" style="align-items:flex-start"><div><div style="font-size:13px;color:var(--on-dark-2)">ชั่วโมงทำงาน${thisW} · ${S.label}</div><div><span style="font-size:44px;font-weight:700;line-height:1.1">${(S.min / 60).toFixed(1).replace('.0', '')}</span> ชม.</div></div>
+    <div class="between" style="align-items:flex-start"><div><div style="font-size:13px;color:var(--on-dark-2)">ชั่วโมงทำงาน${thisW} · ${S.label}</div><div><span style="font-size:36px;font-weight:700;line-height:1.2">${(S.min / 60).toFixed(1).replace('.0', '')}</span> ชม.</div></div>
     <span class="chip" style="background:var(--purple);color:#1E1E20">${ic(diff >= 0 ? 'up' : 'down', 12, 2.4)}${diff >= 0 ? '+' : ''}${diff.toFixed(1)} ชม.</span></div>
     <div style="font-size:12px;color:var(--on-dark-2)">เทียบราย${word} · ${n} ${word}ล่าสุด</div>
     <div style="height:150px;display:grid;grid-template-columns:repeat(${n},minmax(0,1fr));gap:10px;align-items:end">${bars}</div>
@@ -592,7 +592,7 @@ function viewStats() {
   <div class="card stack"><b>ความรู้สึก${thisW}</b>
     <div style="display:flex;height:14px;border-radius:999px;overflow:hidden;background:var(--card-2)">${S.moods.map((m, i) => `<div style="width:${m / totalMood * 100}%;background:${MOODS[i].color}"></div>`).join('')}</div>
     <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;text-align:center">${MOODS.map((m, i) => `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">${flower(m.color, 20, 'var(--card)')}<b>${S.moods[i]}</b><span style="font-size:10px;color:var(--ink-2);line-height:1.3">${m.label.split(' ')[0]}</span></div>`).join('')}</div></div>
-  ${k === 'year' ? `<a class="card row" href="#/archive" style="background:linear-gradient(135deg,#C9A7F5,#E9DDFB);color:#1E1E20;text-decoration:none;justify-content:space-between;border-radius:28px;padding:20px"><div><b style="font-size:13px;color:#4A2A80">สรุปประจำปี</b><div style="font-size:22px;font-weight:700">ปี ${S.label} ของ Blue</div><div style="font-size:13px;color:#3F3F46">ปิดงาน · ไปที่ไหน · เจอใคร</div></div><span class="icon-btn dark">${ic('arrow', 20, 2)}</span></a>` : ''}`;
+  ${k === 'year' ? `<a class="card row" href="#/archive" style="background:linear-gradient(135deg,#C9A7F5,#E9DDFB);color:#1E1E20;text-decoration:none;justify-content:space-between;border-radius:28px;padding:20px"><div><b style="font-size:13px;color:#4A2A80">สรุปประจำปี</b><div style="font-size:20px;font-weight:700;line-height:1.4">ปี ${S.label} ของ Blue</div><div style="font-size:13px;color:#3F3F46">ปิดงาน · ไปที่ไหน · เจอใคร</div></div><span class="icon-btn dark">${ic('arrow', 20, 2)}</span></a>` : ''}`;
 }
 
 /* ---------- ตั้งค่า ---------- */
@@ -631,7 +631,7 @@ function openSheet(title, body, onMount) {
   const root = $('#sheet-root');
   root.innerHTML = `<div class="sheet-dim" data-act="closeSheet"></div>
   <div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="grab"></div>
-  <div class="between"><h2 class="h2" style="font-size:22px;font-weight:700">${esc(title)}</h2><button class="icon-btn solid" data-act="closeSheet" aria-label="ปิด">${ic('close', 18, 2)}</button></div>
+  <div class="between"><h2 class="h2" style="font-size:21px;font-weight:700;line-height:1.35">${esc(title)}</h2><button class="icon-btn solid" data-act="closeSheet" aria-label="ปิด">${ic('close', 18, 2)}</button></div>
   ${body}</div>`;
   const sh = $('.sheet', root);
   if (onMount) onMount(sh);
@@ -661,10 +661,10 @@ function sheetCheckin() {
   const t = today(); const dow = dateOf(t).getDay();
   const def = dow === 5 ? 'wfh' : 'office';
   openSheet('เริ่มงานวันนี้กันเลยไหม', `<form class="stack" style="gap:18px" data-form="checkin">
-    <label class="row" style="align-items:baseline;gap:8px"><input name="in" type="time" value="${nowHM()}" style="font-size:52px;font-weight:700;border:none;background:transparent;width:190px;padding:0"><span class="muted">เวลาเข้างาน · <span style="color:var(--purple-ink);font-weight:600">แตะเพื่อแก้</span></span></label>
+    <label class="field" style="gap:2px"><span class="muted">เวลาเข้างาน · <span style="color:var(--purple-ink);font-weight:600">แตะเพื่อแก้</span></span><input name="in" type="time" value="${nowHM()}" style="font-size:40px;font-weight:700;line-height:1.2;border:none;background:transparent;width:170px;padding:0"></label>
     <div class="field"><span class="label">วันนี้ทำงานแบบไหน</span>${optTiles('type', Object.entries(WORKTYPE).map(([k, v]) => [k, v.label, v.icon]), def)}</div>
     <div id="leave-box" class="stack" hidden><div class="field"><span class="label">ประเภท</span>${optTiles('leaveKind', Object.entries(LEAVE_KIND).map(([k, v]) => [k, v]), 'leave', 3)}</div>${fieldH('สาเหตุที่บอก (ถ้ามี)', inputH('reason', '', 'text', 'เช่น ไข้หวัด'))}</div>
-    <button class="btn purple">${ic('check', 22, 2)} เช็กอิน</button>
+    <button class="btn purple">${ic('check', 20, 2.4)}<span>เช็กอิน</span></button>
     <button type="button" class="btn ghost" data-act="closeSheet">ไว้ทีหลัง</button></form>`, (sh) => {
     bindOpts(sh);
     sh.addEventListener('optchange', (e) => { if (e.detail.name === 'type') $('#leave-box', sh).hidden = e.detail.v !== 'leave'; });
@@ -827,7 +827,7 @@ function sheetArchiveMonth(y, m) {
   const inM = (k) => k && dateOf(k).getFullYear() === y && dateOf(k).getMonth() === m;
   const ps = db.projects.filter((p) => inM(p.archivedAt || p.doneAt));
   const ts = [...db.tasks, ...db.todos].filter((x) => x.done && inM(x.doneAt));
-  openSheet(`${TH_MON_FULL[m]} ${be(y)}`, `<div class="grid2"><div class="card purple"><b style="font-size:26px">${ps.length}</b><div style="font-size:12px">โปรเจกต์ที่ปิด</div></div><div class="card dark"><b style="font-size:26px">${ts.length}</b><div style="font-size:12px;color:var(--on-dark-2)">งานที่เสร็จ</div></div></div>
+  openSheet(`${TH_MON_FULL[m]} ${be(y)}`, `<div class="grid2"><div class="card purple"><b style="font-size:24px;line-height:1.2">${ps.length}</b><div style="font-size:12px">โปรเจกต์ที่ปิด</div></div><div class="card dark"><b style="font-size:24px;line-height:1.2">${ts.length}</b><div style="font-size:12px;color:var(--on-dark-2)">งานที่เสร็จ</div></div></div>
     <div class="stack">${ps.map((p) => `<a class="lrow" href="#/project/${p.id}" data-act="closeSheet"><span class="av p4">${ic('box', 18, 2)}</span><span class="grow"><span class="t">${esc(p.name)}</span><span class="muted" style="font-size:12px">ปิด ${fmtShort(p.doneAt)} · ${tasksOf(p.id).length} งานย่อย</span></span></a>`).join('') || '<div class="empty">เดือนนี้ไม่มีโปรเจกต์ที่ปิด</div>'}</div>`);
 }
 
