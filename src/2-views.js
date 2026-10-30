@@ -267,9 +267,8 @@ function viewRecords(tab) {
     const pj = byId('projects', x.projectId);
     return `<button class="lrow" data-act="openNote" data-id="${x.id}"><span class="av p4">#</span><span class="grow"><span class="t">${esc(x.title)}</span><span class="muted" style="font-size:12px">${esc([x.tags && '#' + x.tags, pj?.name, fmtShort(x.date)].filter(Boolean).join(' · '))}</span></span>${ic('right', 16, 2)}</button>`;
   }));
-  const addAct = { place: 'openPlace', person: 'openPerson', note: 'openNote' }[ui.recTab];
   return `
-  <header class="top"><h1 class="h1">บันทึก</h1><button class="icon-btn dark" data-act="${addAct}" aria-label="เพิ่ม${T[ui.recTab][0]}">${ic('plus', 20, 2)}</button></header>
+  <header class="top"><h1 class="h1">บันทึก</h1><button class="icon-btn dark" data-act="addRecord" aria-label="เพิ่มบันทึก">${ic('plus', 20, 2)}</button></header>
   <label class="search">${ic('search')}<input id="recq" value="${esc(ui.recQuery)}" placeholder="ค้นหาทุกอย่าง: โปรเจกต์ สถานที่ คน โน้ต" aria-label="ค้นหารวม"></label>
   ${q ? '' : `<div class="statgrid" role="tablist">${tabs}</div>`}
   <div class="stack" id="rec-list">${rows.join('') || `<div class="empty">${q ? 'ไม่พบผลลัพธ์' : 'ยังไม่มีบันทึก กด + เพื่อเพิ่ม'}</div>`}</div>`;
@@ -383,6 +382,7 @@ const CHANGELOG = [
     'แอปบน iPhone อัปเดตเป็นเวอร์ชันล่าสุดเองเมื่อเปิดแอป',
     'หน้าเช็กอิน: ช่องข้อมูลการลาแสดงเฉพาะเมื่อเลือก "ลา"',
     'หน้าเช็กอิน: ป้ายเวลาแบบนาฬิกาพลิก พร้อมวันที่',
+    'หน้าบันทึก: กด + แล้วเลือกได้ว่าจะบันทึกสถานที่ คน หรือโน้ต',
     'เพิ่ม "มีอะไรใหม่" ในหน้าตั้งค่า',
     'เอาปุ่มใส่ข้อมูลตัวอย่างออกจากหน้าตั้งค่า',
   ] },

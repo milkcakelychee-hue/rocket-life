@@ -486,9 +486,8 @@ function viewRecords(tab) {
     const pj = byId('projects', x.projectId);
     return `<button class="lrow" data-act="openNote" data-id="${x.id}"><span class="av p4">#</span><span class="grow"><span class="t">${esc(x.title)}</span><span class="muted" style="font-size:12px">${esc([x.tags && '#' + x.tags, pj?.name, fmtShort(x.date)].filter(Boolean).join(' · '))}</span></span>${ic('right', 16, 2)}</button>`;
   }));
-  const addAct = { place: 'openPlace', person: 'openPerson', note: 'openNote' }[ui.recTab];
   return `
-  <header class="top"><h1 class="h1">บันทึก</h1><button class="icon-btn dark" data-act="${addAct}" aria-label="เพิ่ม${T[ui.recTab][0]}">${ic('plus', 20, 2)}</button></header>
+  <header class="top"><h1 class="h1">บันทึก</h1><button class="icon-btn dark" data-act="addRecord" aria-label="เพิ่มบันทึก">${ic('plus', 20, 2)}</button></header>
   <label class="search">${ic('search')}<input id="recq" value="${esc(ui.recQuery)}" placeholder="ค้นหาทุกอย่าง: โปรเจกต์ สถานที่ คน โน้ต" aria-label="ค้นหารวม"></label>
   ${q ? '' : `<div class="statgrid" role="tablist">${tabs}</div>`}
   <div class="stack" id="rec-list">${rows.join('') || `<div class="empty">${q ? 'ไม่พบผลลัพธ์' : 'ยังไม่มีบันทึก กด + เพื่อเพิ่ม'}</div>`}</div>`;
@@ -602,6 +601,7 @@ const CHANGELOG = [
     'แอปบน iPhone อัปเดตเป็นเวอร์ชันล่าสุดเองเมื่อเปิดแอป',
     'หน้าเช็กอิน: ช่องข้อมูลการลาแสดงเฉพาะเมื่อเลือก "ลา"',
     'หน้าเช็กอิน: ป้ายเวลาแบบนาฬิกาพลิก พร้อมวันที่',
+    'หน้าบันทึก: กด + แล้วเลือกได้ว่าจะบันทึกสถานที่ คน หรือโน้ต',
     'เพิ่ม "มีอะไรใหม่" ในหน้าตั้งค่า',
     'เอาปุ่มใส่ข้อมูลตัวอย่างออกจากหน้าตั้งค่า',
   ] },
@@ -790,6 +790,13 @@ function sheetAppt(id, k) {
 }
 
 /* ---------- สถานที่ / คน / โน้ต ---------- */
+function sheetAddRecord() {
+  const opt = (act, icon, t, sub) => `<button class="lrow" data-act="${act}" style="background:var(--bg)"><span class="av p2">${ic(icon, 20, 2)}</span><span class="grow"><span class="t">${t}</span><span class="muted" style="font-size:12px">${sub}</span></span>${ic('right', 16, 2)}</button>`;
+  openSheet('บันทึกอะไรดี', `<div class="stack">
+    ${opt('openPlace', 'pin', 'สถานที่', 'ที่ไป · การเดินทาง · ทางออก')}
+    ${opt('openPerson', 'person', 'คน', 'คนที่เจอ · องค์กร · เรื่องที่คุย')}
+    ${opt('openNote', 'note', 'โน้ต', 'จดไอเดียหรือเรื่องที่อยากจำ')}</div>`);
+}
 function sheetPlace(id) {
   const x = id ? byId('places', id) : {};
   openSheet(id ? 'แก้ไขสถานที่' : 'สถานที่ใหม่', `<form class="stack" style="gap:14px" data-form="place" data-id="${id || ''}">
@@ -861,6 +868,7 @@ const ACT = {
   openProject: (el) => sheetProject(el.dataset.id),
   projectMenu: (el) => sheetProjectMenu(el.dataset.id),
   openAppt: (el) => sheetAppt(el.dataset.id, el.dataset.k),
+  addRecord: () => sheetAddRecord(),
   openPlace: (el) => sheetPlace(el.dataset.id),
   openPerson: (el) => sheetPerson(el.dataset.id),
   openNote: (el) => sheetNote(el.dataset.id),
@@ -1075,6 +1083,8 @@ render();
 if (!logOf(today()) && db.settings.lastCheckinPrompt !== today() && (location.hash || '#/today').startsWith('#/today')) {
   db.settings.lastCheckinPrompt = today(); save(); setTimeout(sheetCheckin, 300);
 }
+// ไอคอนปฏิทิน/นาฬิกาเป็นภาพของเราเอง → แตะช่องแล้วเปิดตัวเลือกให้เลย
+document.addEventListener('click', (e) => { const el = e.target.closest?.('input[type="date"], input[type="time"]'); if (el && el.showPicker) try { el.showPicker(); } catch {} });
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   // เช็กเวอร์ชันใหม่ทุกครั้งที่กลับมาเปิดแอป และรีโหลดเองเมื่อมีตัวใหม่
   const hadSW = !!navigator.serviceWorker.controller;

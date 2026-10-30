@@ -154,6 +154,13 @@ function sheetAppt(id, k) {
 }
 
 /* ---------- สถานที่ / คน / โน้ต ---------- */
+function sheetAddRecord() {
+  const opt = (act, icon, t, sub) => `<button class="lrow" data-act="${act}" style="background:var(--bg)"><span class="av p2">${ic(icon, 20, 2)}</span><span class="grow"><span class="t">${t}</span><span class="muted" style="font-size:12px">${sub}</span></span>${ic('right', 16, 2)}</button>`;
+  openSheet('บันทึกอะไรดี', `<div class="stack">
+    ${opt('openPlace', 'pin', 'สถานที่', 'ที่ไป · การเดินทาง · ทางออก')}
+    ${opt('openPerson', 'person', 'คน', 'คนที่เจอ · องค์กร · เรื่องที่คุย')}
+    ${opt('openNote', 'note', 'โน้ต', 'จดไอเดียหรือเรื่องที่อยากจำ')}</div>`);
+}
 function sheetPlace(id) {
   const x = id ? byId('places', id) : {};
   openSheet(id ? 'แก้ไขสถานที่' : 'สถานที่ใหม่', `<form class="stack" style="gap:14px" data-form="place" data-id="${id || ''}">
@@ -225,6 +232,7 @@ const ACT = {
   openProject: (el) => sheetProject(el.dataset.id),
   projectMenu: (el) => sheetProjectMenu(el.dataset.id),
   openAppt: (el) => sheetAppt(el.dataset.id, el.dataset.k),
+  addRecord: () => sheetAddRecord(),
   openPlace: (el) => sheetPlace(el.dataset.id),
   openPerson: (el) => sheetPerson(el.dataset.id),
   openNote: (el) => sheetNote(el.dataset.id),
@@ -439,6 +447,8 @@ render();
 if (!logOf(today()) && db.settings.lastCheckinPrompt !== today() && (location.hash || '#/today').startsWith('#/today')) {
   db.settings.lastCheckinPrompt = today(); save(); setTimeout(sheetCheckin, 300);
 }
+// ไอคอนปฏิทิน/นาฬิกาเป็นภาพของเราเอง → แตะช่องแล้วเปิดตัวเลือกให้เลย
+document.addEventListener('click', (e) => { const el = e.target.closest?.('input[type="date"], input[type="time"]'); if (el && el.showPicker) try { el.showPicker(); } catch {} });
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   // เช็กเวอร์ชันใหม่ทุกครั้งที่กลับมาเปิดแอป และรีโหลดเองเมื่อมีตัวใหม่
   const hadSW = !!navigator.serviceWorker.controller;
