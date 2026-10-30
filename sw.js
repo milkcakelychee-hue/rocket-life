@@ -1,10 +1,11 @@
-// Rocket Life service worker — ใช้ออฟไลน์ได้ (cache-first สำหรับไฟล์แอป)
-const CACHE = 'rocketlife-v2';
+// Rocket Life service worker — ใช้ออฟไลน์ได้ (network-first: มีเน็ตโหลดเวอร์ชันล่าสุด ออฟไลน์ใช้ของใน cache)
+const CACHE = 'rocketlife-v3';
 const ASSETS = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // cache: 'reload' ข้าม HTTP cache ของเบราว์เซอร์ ไม่งั้นอาจได้ไฟล์เก่ามาเก็บ
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -14,14 +15,13 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  const mine = url.origin === location.origin;
+  if (!mine && !url.host.includes('fonts.g')) return;
   e.respondWith(
-    caches.match(e.request).then((hit) => hit || fetch(e.request).then((res) => {
-      const url = new URL(e.request.url);
-      if (res.ok && (url.origin === location.origin || url.host.includes('fonts.g'))) {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy));
-      }
+    fetch(mine ? new Request(e.request, { cache: 'no-cache' }) : e.request).then((res) => {
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }
       return res;
-    }).catch(() => caches.match('./index.html')))
+    }).catch(() => caches.match(e.request).then((hit) => hit || caches.match('./index.html')))
   );
 });
