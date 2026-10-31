@@ -428,17 +428,15 @@ function viewProjects() {
   const active = db.projects.filter((p) => p.status !== 'archived');
   const count = (s) => active.filter((p) => p.status === s).length;
   const stats = [
-    ['all', 'ทั้งหมด', db.projects.length, 'dots9'], ['doing', 'กำลังทำ', count('doing'), 'hourglass'], ['todo', 'ต้องทำ', count('todo'), 'circle'],
+    ['all', 'ทั้งหมด', active.length, 'dots9'], ['doing', 'กำลังทำ', count('doing'), 'hourglass'], ['todo', 'ต้องทำ', count('todo'), 'circle'],
     ['waiting', 'รอข้อมูล', count('waiting'), 'clock'], ['revise', 'รอแก้ไข', count('revise'), 'edit'],
   ];
   const sg = stats.map(([k, l, n, i]) => `<button class="stat ${ui.projFilter === k ? 'on' : ''}" data-act="projFilter" data-k="${k}"><span class="ic" ${STATUS_COLOR[k] ? `style="background:${STATUS_COLOR[k]};color:#fff"` : ''}>${ic(i, 16, 2)}</span><span><span class="num">${n}</span><br><span class="lb">${l}</span></span></button>`).join('')
     + `<a class="stat" href="#/archive" style="text-decoration:none;color:inherit"><span class="ic">${ic('box', 16, 2)}</span><span><span class="num">${db.projects.filter((p) => p.status === 'archived').length}</span><br><span class="lb">Archive</span></span></a>`;
   const PRI_COLOR = { 1: '#D9533B', 2: '#7C4DCC', 3: '#E08A1E', 4: '#71717A' };
   const pg = Object.entries(PRIORITY).map(([k, v]) => `<button class="stat ${String(ui.priFilter) === k ? 'on' : ''}" data-act="priFilter" data-k="${k}"><span class="ic" style="background:${PRI_COLOR[k]};color:#fff">${ic(v.icon, 16, 2)}</span><span><span class="num">${active.filter((p) => String(p.priority) === k).length}</span><br><span class="lb">${v.label}</span></span></button>`).join('');
-  // "ทั้งหมด" รวมโปรเจกต์ใน Archive ด้วย (เรียงไว้ท้ายสุด)
-  const pool = ui.projFilter === 'all' ? db.projects : active;
-  const list = pool.filter((p) => (ui.projFilter === 'all' || p.status === ui.projFilter) && (!ui.priFilter || String(p.priority) === String(ui.priFilter)))
-    .sort((a, b) => (a.status === 'archived') - (b.status === 'archived') || (a.priority || 9) - (b.priority || 9) || (a.due || 'z').localeCompare(b.due || 'z'));
+  const list = active.filter((p) => (ui.projFilter === 'all' || p.status === ui.projFilter) && (!ui.priFilter || String(p.priority) === String(ui.priFilter)))
+    .sort((a, b) => (a.priority || 9) - (b.priority || 9) || (a.due || 'z').localeCompare(b.due || 'z'));
   const cards = list.length ? list.map(projectCard).join('') : `<div class="empty">ยังไม่มีโปรเจกต์ในหมวดนี้</div>`;
   return `
   <header class="top"><h1 class="h1">โปรเจกต์</h1>
