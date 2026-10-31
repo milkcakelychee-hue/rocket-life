@@ -241,3 +241,10 @@ textarea.input { height: 80px; padding: 12px 16px; resize: none; }
 .toast { position: fixed; left: 50%; bottom: calc(120px + var(--safe-b)); transform: translateX(-50%); z-index: 60; padding: 10px 16px; border-radius: 999px; background: var(--dark); color: var(--on-dark); font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
 [hidden] { display: none !important; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.mini { gap: 6px; }
+.mini .stat { height: 42px; padding: 0 8px; border-radius: 14px; gap: 6px; }
+.mini .stat .ic { width: 24px; height: 24px; }
+.mini .stat > span:last-child { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
+.mini .stat > span:last-child br { display: none; }
+.mini .stat .num { font-size: 15px; }
+.mini .stat .lb { font-size: 12px; overflow: hidden; text-overflow: ellipsis; }

@@ -431,18 +431,18 @@ function viewProjects() {
     ['all', 'ทั้งหมด', active.length, 'dots9'], ['doing', 'กำลังทำ', count('doing'), 'hourglass'], ['todo', 'ต้องทำ', count('todo'), 'circle'],
     ['waiting', 'รอข้อมูล', count('waiting'), 'clock'], ['revise', 'รอแก้ไข', count('revise'), 'edit'],
   ];
-  const sg = stats.map(([k, l, n, i]) => `<button class="stat ${ui.projFilter === k ? 'on' : ''}" data-act="projFilter" data-k="${k}"><span class="ic" ${STATUS_COLOR[k] ? `style="background:${STATUS_COLOR[k]};color:#fff"` : ''}>${ic(i, 16, 2)}</span><span><span class="num">${n}</span><br><span class="lb">${l}</span></span></button>`).join('')
-    + `<a class="stat" href="#/archive" style="text-decoration:none;color:inherit"><span class="ic">${ic('box', 16, 2)}</span><span><span class="num">${db.projects.filter((p) => p.status === 'archived').length}</span><br><span class="lb">Archive</span></span></a>`;
+  const sg = stats.map(([k, l, n, i]) => `<button class="stat ${ui.projFilter === k ? 'on' : ''}" data-act="projFilter" data-k="${k}"><span class="ic" ${STATUS_COLOR[k] ? `style="background:${STATUS_COLOR[k]};color:#fff"` : ''}>${ic(i, 13, 2.2)}</span><span><span class="num">${n}</span><br><span class="lb">${l}</span></span></button>`).join('')
+    + `<a class="stat" href="#/archive" style="text-decoration:none;color:inherit"><span class="ic">${ic('box', 13, 2.2)}</span><span><span class="num">${db.projects.filter((p) => p.status === 'archived').length}</span><br><span class="lb">Archive</span></span></a>`;
   const PRI_COLOR = { 1: '#D9533B', 2: '#7C4DCC', 3: '#E08A1E', 4: '#71717A' };
-  const pg = Object.entries(PRIORITY).map(([k, v]) => `<button class="stat ${String(ui.priFilter) === k ? 'on' : ''}" data-act="priFilter" data-k="${k}"><span class="ic" style="background:${PRI_COLOR[k]};color:#fff">${ic(v.icon, 16, 2)}</span><span><span class="num">${active.filter((p) => String(p.priority) === k).length}</span><br><span class="lb">${v.label}</span></span></button>`).join('');
+  const pg = Object.entries(PRIORITY).map(([k, v]) => `<button class="stat ${String(ui.priFilter) === k ? 'on' : ''}" data-act="priFilter" data-k="${k}"><span class="ic" style="background:${PRI_COLOR[k]};color:#fff">${ic(v.icon, 13, 2.2)}</span><span><span class="num">${active.filter((p) => String(p.priority) === k).length}</span><br><span class="lb">${v.label}</span></span></button>`).join('');
   const list = active.filter((p) => (ui.projFilter === 'all' || p.status === ui.projFilter) && (!ui.priFilter || String(p.priority) === String(ui.priFilter)))
     .sort((a, b) => (a.priority || 9) - (b.priority || 9) || (a.due || 'z').localeCompare(b.due || 'z'));
   const cards = list.length ? list.map(projectCard).join('') : `<div class="empty">ยังไม่มีโปรเจกต์ในหมวดนี้</div>`;
   return `
   <header class="top"><h1 class="h1">โปรเจกต์</h1>
     <div class="row"><a class="icon-btn" href="#/records" aria-label="ค้นหา">${ic('search')}</a></div></header>
-  <section class="stack" style="gap:8px"><div class="label">แยกตามสถานะ</div><div class="statgrid">${sg}</div></section>
-  <section class="stack" style="gap:8px"><div class="between"><span class="label">แยกตามความสำคัญ · ความด่วน</span>${ui.priFilter ? '<button class="link-btn" style="height:28px;padding:0;font-size:13px" data-act="priFilter" data-k="">ล้างตัวกรอง</button>' : ''}</div><div class="grid2">${pg}</div></section>
+  <section class="stack" style="gap:8px"><div class="label">แยกตามสถานะ</div><div class="statgrid mini">${sg}</div></section>
+  <section class="stack" style="gap:8px"><div class="between"><span class="label">แยกตามความสำคัญ · ความด่วน</span>${ui.priFilter ? '<button class="link-btn" style="height:28px;padding:0;font-size:13px" data-act="priFilter" data-k="">ล้างตัวกรอง</button>' : ''}</div><div class="grid2 mini">${pg}</div></section>
   <button class="pill-btn" style="height:48px;justify-content:center;border-style:dashed" data-act="openProject">${ic('plus', 18, 2)}โปรเจกต์ใหม่</button>
   <div class="stack">${cards}</div>`;
 }
@@ -593,7 +593,7 @@ function viewRecords(tab) {
   if (tab) ui.recTab = tab;
   const q = ui.recQuery.trim().toLowerCase();
   const T = { place: ['สถานที่', 'pin', db.places.length], person: ['คน', 'person', db.people.length], note: ['โน้ต', 'note', db.notes.length] };
-  const tabs = Object.entries(T).map(([k, [l, i, n]]) => `<button class="stat ${ui.recTab === k ? 'on' : ''}" data-act="recTab" data-k="${k}" role="tab" aria-selected="${ui.recTab === k}"><span class="ic">${ic(i, 16, 2)}</span><span><span class="num">${n}</span><br><span class="lb">${l}</span></span></button>`).join('');
+  const tabs = Object.entries(T).map(([k, [l, i, n]]) => `<button class="stat ${ui.recTab === k ? 'on' : ''}" data-act="recTab" data-k="${k}" role="tab" aria-selected="${ui.recTab === k}"><span class="ic">${ic(i, 13, 2.2)}</span><span><span class="num">${n}</span><br><span class="lb">${l}</span></span></button>`).join('');
   let rows = [];
   const hit = (...xs) => !q || xs.join(' ').toLowerCase().includes(q);
   if (q) {
