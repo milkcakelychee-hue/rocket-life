@@ -81,6 +81,7 @@ const flower = (color, size = 12, center = null) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><g fill="${color}"><circle cx="12" cy="6" r="4.2"/><circle cx="17.7" cy="10.2" r="4.2"/><circle cx="15.5" cy="17" r="4.2"/><circle cx="8.5" cy="17" r="4.2"/><circle cx="6.3" cy="10.2" r="4.2"/></g>${center ? `<circle cx="12" cy="12" r="3" fill="${center}"/>` : ''}</svg>`;
 
 /* ---------- ค่าคงที่ตามดีไซน์ ---------- */
+const STATUS_COLOR = { todo: '#71717A', doing: '#7C4DCC', waiting: '#E08A1E', revise: '#D9533B', done: '#2E9E4F', archived: '#71717A' };
 const STATUS = {
   todo: { label: 'ต้องทำ', icon: 'circle', tone: 'p4' },
   doing: { label: 'กำลังทำ', icon: 'hourglass', tone: 'p2' },
@@ -96,6 +97,9 @@ const PRIORITY = {
   4: { label: 'ไม่สำคัญ · ไม่ด่วน', icon: 'minus', cls: 'p4' },
 };
 const CATEGORIES = { infographic: { label: 'อินโฟกราฟิก', icon: 'infographic' }, article: { label: 'บทความ', icon: 'article' } };
+// หมวดโปรเจกต์ = หมวดตั้งต้น + ที่ผู้ใช้เพิ่มเอง (db.settings.projCats: [{ key, label, icon }])
+const allCats = () => ({ ...CATEGORIES, ...Object.fromEntries((db.settings.projCats || []).map((c) => [c.key, c])) });
+const PROJ_CAT_ICONS = ['infographic', 'article', 'note', 'folder', 'star', 'chat', 'person', 'map', 'table', 'stats', 'cal', 'heart'];
 const WORKTYPE = {
   office: { label: 'ออฟฟิศ', icon: 'building' },
   wfh: { label: 'WFH', icon: 'home' },
@@ -158,7 +162,7 @@ const blank = () => ({
   schemaVersion: SCHEMA,
   projects: [], tasks: [], todos: [], timeLogs: [], appts: [],
   places: [], people: [], notes: [],
-  settings: { placeCats: [], transits: [], theme: 'system', lastBackup: null, lastRollover: null, lastCheckinPrompt: null, todayOrder: {} },
+  settings: { placeCats: [], transits: [], projCats: [], theme: 'system', lastBackup: null, lastRollover: null, lastCheckinPrompt: null, todayOrder: {} },
 });
 let db = load();
 function load() {
@@ -238,5 +242,10 @@ function download(name, text, type = 'application/json') {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
-const priChip = (n) => n ? `<span class="chip ${PRIORITY[n].cls}">${ic(PRIORITY[n].icon, 12, 2.2)}${PRIORITY[n].label}</span>` : '';
-const statusChip = (s, cls = '') => `<span class="chip ${cls}" style="border:1px solid currentColor;font-weight:500">${ic(STATUS[s].icon, 12, 2)}${STATUS[s].label}</span>`;
+// ความสำคัญ / ความเร่งด่วน แยกเป็น 2 ป้าย (priority 1 สำคัญ·ด่วน, 2 สำคัญ·ไม่ด่วน, 3 ไม่สำคัญ·ด่วน, 4 ไม่สำคัญ·ไม่ด่วน)
+const priChip = (n) => {
+  if (!n) return '';
+  const imp = n <= 2; const urg = n % 2 === 1;
+  return `<span class="chip ${imp ? 'p2' : 'p4'}" title="ความสำคัญ">${ic(imp ? 'star' : 'minus', 12, 2.2)}${imp ? 'สำคัญ' : 'ไม่สำคัญ'}</span><span class="chip ${urg ? 'p1' : 'p4'}" title="ความเร่งด่วน">${ic(urg ? 'bang' : 'clock', 12, 2.2)}${urg ? 'ด่วน' : 'ไม่ด่วน'}</span>`;
+};
+const statusChip = (s, cls = '') => `<span class="chip st ${cls}" title="สถานะงาน"><span class="st-ic" style="background:${STATUS_COLOR[s]}">${ic(STATUS[s].icon, 10, 2.6)}</span>${STATUS[s].label}</span>`;

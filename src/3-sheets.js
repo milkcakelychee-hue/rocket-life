@@ -119,6 +119,8 @@ function sheetTask(id) {
 }
 
 /* ---------- โปรเจกต์ ---------- */
+const projCatsH = (cats) => Object.entries(allCats()).map(([k, v]) => `<label class="opt" style="height:56px;font-size:14px;font-weight:600"><span style="color:var(--purple-ink)">${ic(v.icon, 20)}</span><span style="flex:1">${esc(v.label)}</span><input type="checkbox" name="cat_${k}" ${cats.includes(k) ? 'checked' : ''} style="width:22px;height:22px;accent-color:#2B2B2E"></label>`).join('')
+  + `<button type="button" class="opt" data-act="toggleAdd" data-box="pcat" style="height:56px;font-size:14px;font-weight:600;border-style:dashed;justify-content:center">${ic('plus', 18, 2)}เพิ่มหมวด</button>`;
 function sheetProject(id) {
   const p = id ? byId('projects', id) : null;
   const cats = p?.categories || ['infographic'];
@@ -130,8 +132,11 @@ function sheetProject(id) {
     <div class="field"><span class="label">สถานะ</span>${optTiles('status', ['todo', 'doing', 'waiting', 'revise'].map((k) => [k, STATUS[k].label, STATUS[k].icon, stTone[k]]), ['done', 'archived'].includes(p?.status) ? '' : (p?.status || 'todo'))}</div>
     <div class="field"><span class="label">ความสำคัญ</span>${optTiles('priority', Object.entries(PRIORITY).map(([k, v]) => [k, v.label, v.icon, prTone[k]]), p?.priority || 2)}</div>
     <div class="grid2">${fieldH('วันเริ่ม', inputH('start', p?.start || today(), 'date'))}${fieldH('กำหนดส่ง', inputH('due', p?.due || '', 'date'))}</div>
-    <div class="field"><div class="between"><span class="label">หมวด</span><span class="muted" style="font-size:12px">เลือกได้ทั้ง 2 อย่าง</span></div>
-      <div class="grid2">${Object.entries(CATEGORIES).map(([k, v]) => `<label class="opt" style="height:56px;font-size:14px;font-weight:600"><span style="color:var(--purple-ink)">${ic(v.icon, 20)}</span><span style="flex:1">${v.label}</span><input type="checkbox" name="cat_${k}" ${cats.includes(k) ? 'checked' : ''} style="width:22px;height:22px;accent-color:#2B2B2E"></label>`).join('')}</div></div>
+    <div class="field"><div class="between"><span class="label">หมวด</span><span class="muted" style="font-size:12px">เลือกได้หลายหมวด</span></div>
+      <div class="grid2" id="pcat-tiles">${projCatsH(cats)}</div>
+      <div class="addbox" id="add-pcat" hidden>${inputH('newPCatName', '', 'text', 'ชื่อหมวด เช่น วิดีโอ, พอดแคสต์')}
+        <span class="label">ไอคอน</span>${swatchH('newPCatIcon', PROJ_CAT_ICONS, 'folder', (i) => ic(i, 18, 2))}
+        <button type="button" class="btn" style="height:44px;font-size:15px" data-act="addProjCat">เพิ่มหมวดนี้</button></div></div>
     <button class="btn">${p ? 'บันทึก' : 'สร้างโปรเจกต์'}</button></form>`, bindOpts);
 }
 function sheetProjectMenu(id) {
@@ -139,7 +144,7 @@ function sheetProjectMenu(id) {
   const done = ['done', 'archived'].includes(p.status);
   openSheet('จัดการโปรเจกต์', `<div class="stack">
     ${done ? `<button class="lrow" data-act="projReopen" data-id="${id}"><span class="av p2">${ic('hourglass', 18, 2)}</span><span class="grow"><span class="t">เปิดโปรเจกต์อีกครั้ง</span><span class="muted" style="font-size:12px">กลับไปเป็น "กำลังทำ"</span></span></button>`
-      : `<button class="lrow" data-act="projDone" data-id="${id}"><span class="av" style="background:var(--dark);color:var(--on-dark)">${ic('check', 18, 2.4)}</span><span class="grow"><span class="t">ทำเครื่องหมายว่าเสร็จแล้ว</span><span class="muted" style="font-size:12px">วันถัดไประบบย้ายเข้า Archive ให้เอง</span></span></button>`}
+      : ''}
     <button class="lrow" data-act="delProject" data-id="${id}"><span class="av p1">${ic('trash', 18, 2)}</span><span class="grow"><span class="t" style="color:var(--warn-ink)">ลบโปรเจกต์</span><span class="muted" style="font-size:12px">ลบงานย่อยทั้งหมดด้วย</span></span></button></div>`);
 }
 
@@ -210,7 +215,7 @@ function sheetVisit(placeId, vid) {
     <div class="muted" style="margin-top:-6px">${esc(x.name)}</div>
     ${fieldH('ไปวันที่', inputH('date', v?.date || today(), 'date'))}
     <div class="field"><span class="label">ไปเพื่อโปรเจกต์</span>${projectSelect('projectId', v?.projectId ?? (v ? '' : db.projects.find((p) => p.status === 'doing')?.id || ''))}
-      <button type="button" class="link-btn" style="align-self:flex-start;height:36px;padding:0" data-act="visitNewProject">${ic('plus', 14, 2)} สร้างโปรเจกต์ใหม่</button>
+      <button type="button" class="pill-btn" style="align-self:flex-start;background:var(--purple);color:#1E1E20;border:none;font-weight:600" data-act="visitNewProject">${ic('plus', 16, 2)}สร้างโปรเจกต์ใหม่</button>
       <div id="newproj-box" hidden>${inputH('newProject', '', 'text', 'ชื่อโปรเจกต์ใหม่')}</div></div>
     ${fieldH('ไปทำอะไร (ถ้ามี)', inputH('note', v?.note || '', 'text', 'เช่น ประชุม, ถ่ายภาพ'))}
     <button class="btn">บันทึก</button>${v ? `<button type="button" class="btn ghost" style="color:var(--warn-ink)" data-act="delVisit" data-place="${placeId}" data-id="${vid}">ลบรายการนี้</button>` : ''}</form>`);
@@ -291,6 +296,7 @@ const ACT = {
     db[list] = db[list].filter((x) => x.id !== el.dataset.id); save(); closeSheet(); render();
   },
   projFilter: (el) => { ui.projFilter = el.dataset.k; render(); },
+  priFilter: (el) => { ui.priFilter = el.dataset.k && String(ui.priFilter) !== el.dataset.k ? el.dataset.k : null; render(); },
   projDone: (el) => { const p = byId('projects', el.dataset.id); p.status = 'done'; p.doneAt = today(); save(); closeSheet(); render(); toast('เยี่ยม! ปิดโปรเจกต์แล้ว'); },
   projReopen: (el) => { const p = byId('projects', el.dataset.id); p.status = 'doing'; p.doneAt = null; p.archivedAt = null; save(); closeSheet(); render(); },
   delProject: (el) => {
@@ -320,6 +326,14 @@ const ACT = {
     $$('[data-kind]', sh).forEach((el) => { el.hidden = !el.dataset.kind.split(' ').includes('bus'); });
     $('[name=newTrName]', sh).value = ''; $('#add-tr', sh).hidden = true; toast('เพิ่มวิธีไปแล้ว');
   },
+  addProjCat: () => {
+    const sh = $('.sheet'); const label = $('[name=newPCatName]', sh).value.trim(); if (!label) { toast('ตั้งชื่อหมวดก่อนนะ'); return; }
+    const c = { key: 'c_' + uid(), label, icon: $('[name=newPCatIcon]', sh).value || 'folder' };
+    (db.settings.projCats = db.settings.projCats || []).push(c); save();
+    const checked = Object.keys(allCats()).filter((k) => $(`[name="cat_${k}"]`, sh)?.checked).concat(c.key);
+    $('#pcat-tiles', sh).innerHTML = projCatsH(checked); $('[name=newPCatName]', sh).value = ''; $('#add-pcat', sh).hidden = true; toast('เพิ่มหมวดแล้ว');
+  },
+  delTask: (el) => { if (!confirm('ลบงานย่อยนี้?')) return; db.tasks = db.tasks.filter((x) => x.id !== el.dataset.id); save(); render(); },
   provinceList: () => {
     const been = {}; db.places.forEach((x) => { if (x.province) been[x.province] = (been[x.province] || 0) + 1; });
     const rows = Object.entries(been).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'th'));
@@ -381,7 +395,7 @@ const FORM = {
   project: (f, v) => {
     const id = f.dataset.id;
     const data = { name: v.name.trim(), desc: v.desc, priority: Number(v.priority) || 2, start: v.start, due: v.due || null,
-      categories: Object.keys(CATEGORIES).filter((k) => v['cat_' + k]) };
+      categories: Object.keys(allCats()).filter((k) => v['cat_' + k]) };
     if (v.status) data.status = v.status;
     if (!data.name) return false;
     if (id) Object.assign(byId('projects', id), data);
@@ -522,6 +536,32 @@ render();
 if (!logOf(today()) && db.settings.lastCheckinPrompt !== today() && (location.hash || '#/today').startsWith('#/today')) {
   db.settings.lastCheckinPrompt = today(); save(); setTimeout(sheetCheckin, 300);
 }
+/* ปัดงานย่อยไปทางซ้ายเพื่อโชว์ปุ่ม วันนี้ · แก้ไข · ลบ */
+let swipeS = null;
+document.addEventListener('touchstart', (e) => {
+  const row = e.target.closest('.swipe-row'); if (!row) return;
+  $$('.swipe-row.open').forEach((r) => { if (r !== row) { r.classList.remove('open'); r.style.transform = ''; } });
+  swipeS = { row, x: e.touches[0].clientX, y: e.touches[0].clientY, base: row.classList.contains('open') ? -row.previousElementSibling.offsetWidth : 0, dx: 0, lock: null };
+}, { passive: true });
+document.addEventListener('touchmove', (e) => {
+  if (!swipeS) return;
+  const dx = e.touches[0].clientX - swipeS.x; const dy = e.touches[0].clientY - swipeS.y;
+  if (swipeS.lock === null && Math.abs(dx) + Math.abs(dy) > 8) swipeS.lock = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+  if (swipeS.lock !== 'x') return;
+  const w = swipeS.row.previousElementSibling.offsetWidth;
+  swipeS.dx = Math.max(-w, Math.min(0, swipeS.base + dx));
+  swipeS.row.style.transition = 'none'; swipeS.row.style.transform = `translateX(${swipeS.dx}px)`;
+}, { passive: true });
+document.addEventListener('touchend', () => {
+  if (!swipeS) return; const { row, lock, dx } = swipeS; swipeS = null;
+  if (lock !== 'x') return;
+  const w = row.previousElementSibling.offsetWidth; const open = dx < -w / 3;
+  row.style.transition = ''; row.style.transform = open ? `translateX(${-w}px)` : ''; row.classList.toggle('open', open);
+});
+// ล็อกไม่ให้ซูม (iOS ไม่สนใจ user-scalable=no เลยต้องกัน gesture เอง)
+['gesturestart', 'gesturechange'].forEach((t) => document.addEventListener(t, (e) => e.preventDefault()));
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => { const n = Date.now(); if (n - lastTouchEnd < 300 && !e.target.closest('input, textarea, select')) e.preventDefault(); lastTouchEnd = n; }, { passive: false });
 // ไอคอนปฏิทิน/นาฬิกาเป็นภาพของเราเอง → แตะช่องแล้วเปิดตัวเลือกให้เลย
 document.addEventListener('click', (e) => { const el = e.target.closest?.('input[type="date"], input[type="time"]'); if (el && el.showPicker) try { el.showPicker(); } catch {} });
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {

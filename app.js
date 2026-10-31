@@ -162,6 +162,7 @@ const flower = (color, size = 12, center = null) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><g fill="${color}"><circle cx="12" cy="6" r="4.2"/><circle cx="17.7" cy="10.2" r="4.2"/><circle cx="15.5" cy="17" r="4.2"/><circle cx="8.5" cy="17" r="4.2"/><circle cx="6.3" cy="10.2" r="4.2"/></g>${center ? `<circle cx="12" cy="12" r="3" fill="${center}"/>` : ''}</svg>`;
 
 /* ---------- ค่าคงที่ตามดีไซน์ ---------- */
+const STATUS_COLOR = { todo: '#71717A', doing: '#7C4DCC', waiting: '#E08A1E', revise: '#D9533B', done: '#2E9E4F', archived: '#71717A' };
 const STATUS = {
   todo: { label: 'ต้องทำ', icon: 'circle', tone: 'p4' },
   doing: { label: 'กำลังทำ', icon: 'hourglass', tone: 'p2' },
@@ -177,6 +178,9 @@ const PRIORITY = {
   4: { label: 'ไม่สำคัญ · ไม่ด่วน', icon: 'minus', cls: 'p4' },
 };
 const CATEGORIES = { infographic: { label: 'อินโฟกราฟิก', icon: 'infographic' }, article: { label: 'บทความ', icon: 'article' } };
+// หมวดโปรเจกต์ = หมวดตั้งต้น + ที่ผู้ใช้เพิ่มเอง (db.settings.projCats: [{ key, label, icon }])
+const allCats = () => ({ ...CATEGORIES, ...Object.fromEntries((db.settings.projCats || []).map((c) => [c.key, c])) });
+const PROJ_CAT_ICONS = ['infographic', 'article', 'note', 'folder', 'star', 'chat', 'person', 'map', 'table', 'stats', 'cal', 'heart'];
 const WORKTYPE = {
   office: { label: 'ออฟฟิศ', icon: 'building' },
   wfh: { label: 'WFH', icon: 'home' },
@@ -239,7 +243,7 @@ const blank = () => ({
   schemaVersion: SCHEMA,
   projects: [], tasks: [], todos: [], timeLogs: [], appts: [],
   places: [], people: [], notes: [],
-  settings: { placeCats: [], transits: [], theme: 'system', lastBackup: null, lastRollover: null, lastCheckinPrompt: null, todayOrder: {} },
+  settings: { placeCats: [], transits: [], projCats: [], theme: 'system', lastBackup: null, lastRollover: null, lastCheckinPrompt: null, todayOrder: {} },
 });
 let db = load();
 function load() {
@@ -319,12 +323,17 @@ function download(name, text, type = 'application/json') {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
-const priChip = (n) => n ? `<span class="chip ${PRIORITY[n].cls}">${ic(PRIORITY[n].icon, 12, 2.2)}${PRIORITY[n].label}</span>` : '';
-const statusChip = (s, cls = '') => `<span class="chip ${cls}" style="border:1px solid currentColor;font-weight:500">${ic(STATUS[s].icon, 12, 2)}${STATUS[s].label}</span>`;
+// ความสำคัญ / ความเร่งด่วน แยกเป็น 2 ป้าย (priority 1 สำคัญ·ด่วน, 2 สำคัญ·ไม่ด่วน, 3 ไม่สำคัญ·ด่วน, 4 ไม่สำคัญ·ไม่ด่วน)
+const priChip = (n) => {
+  if (!n) return '';
+  const imp = n <= 2; const urg = n % 2 === 1;
+  return `<span class="chip ${imp ? 'p2' : 'p4'}" title="ความสำคัญ">${ic(imp ? 'star' : 'minus', 12, 2.2)}${imp ? 'สำคัญ' : 'ไม่สำคัญ'}</span><span class="chip ${urg ? 'p1' : 'p4'}" title="ความเร่งด่วน">${ic(urg ? 'bang' : 'clock', 12, 2.2)}${urg ? 'ด่วน' : 'ไม่ด่วน'}</span>`;
+};
+const statusChip = (s, cls = '') => `<span class="chip st ${cls}" title="สถานะงาน"><span class="st-ic" style="background:${STATUS_COLOR[s]}">${ic(STATUS[s].icon, 10, 2.6)}</span>${STATUS[s].label}</span>`;
 /* =========================================================
    หน้าจอ (views) — แต่ละฟังก์ชันคืน HTML ของหน้านั้น
    ========================================================= */
-const ui = { projFilter: 'all', calMonth: null, calSel: null, recTab: 'place', recQuery: '', statPeriod: 'week', archiveYear: null };
+const ui = { projFilter: 'all', priFilter: null, calMonth: null, calSel: null, recTab: 'place', recQuery: '', statPeriod: 'week', archiveYear: null };
 
 /* ---------- เมนูล่าง ---------- */
 function renderTabbar(active) {
@@ -419,47 +428,57 @@ function viewProjects() {
   const active = db.projects.filter((p) => p.status !== 'archived');
   const count = (s) => active.filter((p) => p.status === s).length;
   const stats = [
-    ['all', 'ทั้งหมด', active.length, 'dots9'], ['doing', 'กำลังทำ', count('doing'), 'hourglass'], ['todo', 'ต้องทำ', count('todo'), 'circle'],
+    ['all', 'ทั้งหมด', db.projects.length, 'dots9'], ['doing', 'กำลังทำ', count('doing'), 'hourglass'], ['todo', 'ต้องทำ', count('todo'), 'circle'],
     ['waiting', 'รอข้อมูล', count('waiting'), 'clock'], ['revise', 'รอแก้ไข', count('revise'), 'edit'],
   ];
-  const sg = stats.map(([k, l, n, i]) => `<button class="stat ${ui.projFilter === k ? 'on' : ''}" data-act="projFilter" data-k="${k}"><span class="ic">${ic(i, 16, 2)}</span><span><span class="num">${n}</span><br><span class="lb">${l}</span></span></button>`).join('')
+  const sg = stats.map(([k, l, n, i]) => `<button class="stat ${ui.projFilter === k ? 'on' : ''}" data-act="projFilter" data-k="${k}"><span class="ic" ${STATUS_COLOR[k] ? `style="background:${STATUS_COLOR[k]};color:#fff"` : ''}>${ic(i, 16, 2)}</span><span><span class="num">${n}</span><br><span class="lb">${l}</span></span></button>`).join('')
     + `<a class="stat" href="#/archive" style="text-decoration:none;color:inherit"><span class="ic">${ic('box', 16, 2)}</span><span><span class="num">${db.projects.filter((p) => p.status === 'archived').length}</span><br><span class="lb">Archive</span></span></a>`;
-  const list = active.filter((p) => ui.projFilter === 'all' || p.status === ui.projFilter)
-    .sort((a, b) => (a.priority || 9) - (b.priority || 9) || (a.due || 'z').localeCompare(b.due || 'z'));
+  const PRI_COLOR = { 1: '#D9533B', 2: '#7C4DCC', 3: '#E08A1E', 4: '#71717A' };
+  const pg = Object.entries(PRIORITY).map(([k, v]) => `<button class="stat ${String(ui.priFilter) === k ? 'on' : ''}" data-act="priFilter" data-k="${k}"><span class="ic" style="background:${PRI_COLOR[k]};color:#fff">${ic(v.icon, 16, 2)}</span><span><span class="num">${active.filter((p) => String(p.priority) === k).length}</span><br><span class="lb">${v.label}</span></span></button>`).join('');
+  // "ทั้งหมด" รวมโปรเจกต์ใน Archive ด้วย (เรียงไว้ท้ายสุด)
+  const pool = ui.projFilter === 'all' ? db.projects : active;
+  const list = pool.filter((p) => (ui.projFilter === 'all' || p.status === ui.projFilter) && (!ui.priFilter || String(p.priority) === String(ui.priFilter)))
+    .sort((a, b) => (a.status === 'archived') - (b.status === 'archived') || (a.priority || 9) - (b.priority || 9) || (a.due || 'z').localeCompare(b.due || 'z'));
   const cards = list.length ? list.map(projectCard).join('') : `<div class="empty">ยังไม่มีโปรเจกต์ในหมวดนี้</div>`;
   return `
   <header class="top"><h1 class="h1">โปรเจกต์</h1>
     <div class="row"><a class="icon-btn" href="#/records" aria-label="ค้นหา">${ic('search')}</a></div></header>
-  <div class="statgrid">${sg}</div>
+  <section class="stack" style="gap:8px"><div class="label">แยกตามสถานะ</div><div class="statgrid">${sg}</div></section>
+  <section class="stack" style="gap:8px"><div class="between"><span class="label">แยกตามความสำคัญ · ความด่วน</span>${ui.priFilter ? '<button class="link-btn" style="height:28px;padding:0;font-size:13px" data-act="priFilter" data-k="">ล้างตัวกรอง</button>' : ''}</div><div class="grid2">${pg}</div></section>
   <button class="pill-btn" style="height:48px;justify-content:center;border-style:dashed" data-act="openProject">${ic('plus', 18, 2)}โปรเจกต์ใหม่</button>
   <div class="stack">${cards}</div>`;
 }
 function projectCard(p) {
   const tone = p.priority === 1 ? 'dark' : p.status === 'doing' ? 'purple' : 'grey';
   const pr = progress(p); const ts = tasksOf(p.id);
-  const cats = (p.categories || []).map((c) => CATEGORIES[c]?.label).filter(Boolean).join(' · ');
-  return `<a class="pcard ${tone}" href="#/project/${p.id}"><div class="in">
-    <div class="row" style="flex-wrap:wrap">${statusChip(p.status)}${priChip(p.priority)}</div>
+  const cats = (p.categories || []).map((c) => allCats()[c]?.label).filter(Boolean).join(' · ');
+  const done = ['done', 'archived'].includes(p.status);
+  return `<div class="pcard ${tone}"><a class="in" href="#/project/${p.id}">
+    <div class="row" style="flex-wrap:wrap;padding-right:48px">${statusChip(p.status)}${priChip(p.priority)}</div>
     <div class="title">${esc(p.name)}</div>
     <div class="row" style="gap:10px"><div class="bar"><i style="width:${Math.round(pr * 100)}%"></i></div><b style="font-size:12px">${Math.round(pr * 100)}%</b><span style="font-size:12px">${ts.filter((x) => x.done).length}/${ts.length}</span></div>
     <div class="between" style="font-size:12px;opacity:.85"><span>${esc(cats)}</span>${p.due ? `<span class="row" style="gap:4px">${ic('clock', 12, 2)}ส่ง ${fmtShort(p.due)}</span>` : ''}</div>
-  </div></a>`;
+  </a><button class="tick pc-done ${done ? 'on' : ''}" data-act="${done ? 'projReopen' : 'projDone'}" data-id="${p.id}" aria-label="${done ? 'ยกเลิกเสร็จ' : 'ทำเครื่องหมายว่าเสร็จ'}">${done ? ic('check', 16, 2.6) : ''}</button></div>`;
 }
 function viewProject(id) {
   const p = byId('projects', id);
   if (!p) return `<div class="empty">ไม่พบโปรเจกต์นี้</div>`;
   const ts = tasksOf(id); const pr = progress(p); const t = today();
-  const tasks = ts.map((x) => `<div class="todo ${x.done ? 'done' : ''}">
+  const tasks = ts.map((x) => `<div class="swipe"><div class="swipe-acts">
+      ${!x.done && x.plannedFor !== t ? `<button class="sa" style="background:var(--purple);color:#1E1E20" data-act="planToday" data-id="${x.id}">${ic('sun', 18, 2)}<span>วันนี้</span></button>` : ''}
+      <button class="sa" style="background:var(--dark);color:var(--on-dark)" data-act="editItem" data-kind="task" data-id="${x.id}">${ic('edit', 18, 2)}<span>แก้ไข</span></button>
+      <button class="sa" style="background:var(--warn);color:#fff" data-act="delTask" data-id="${x.id}">${ic('trash', 18, 2)}<span>ลบ</span></button></div>
+    <div class="todo swipe-row ${x.done ? 'done' : ''}">
     ${x.done ? `<button class="tick on" data-act="toggleItem" data-kind="task" data-id="${x.id}" aria-label="ยกเลิกเสร็จ">${ic('check', 16, 2.6)}</button>` : `<button class="tick" data-act="toggleItem" data-kind="task" data-id="${x.id}" aria-label="ทำเสร็จ"></button>`}
     <button class="grow" data-act="editItem" data-kind="task" data-id="${x.id}"><span class="t">${esc(x.title)}</span>
     ${x.plannedFor === t && !x.done ? `<span class="due-tag" style="color:var(--purple-ink)">${ic('sun', 12, 2.2)}อยู่ใน to-do วันนี้</span>` : ''}</button>
-    ${!x.done && x.plannedFor !== t ? `<button class="icon-btn solid" style="background:var(--purple-soft);color:var(--purple-ink)" data-act="planToday" data-id="${x.id}" aria-label="ใส่ใน to-do วันนี้">${ic('sun', 18, 2)}</button>` : '<span style="width:8px"></span>'}
-  </div>`).join('');
+    <span class="muted" style="padding-right:8px;opacity:.6" aria-hidden="true">${ic('left', 16, 2)}</span>
+  </div></div>`).join('');
   const linkedPlaces = db.places.filter((x) => (x.visits || []).some((v) => v.projectId === id));
   const linkedPeople = db.people.filter((x) => (x.projectIds || []).includes(id));
   const linkedNotes = db.notes.filter((x) => x.projectId === id);
   const link = (icon, label, n, sub, href) => `<a class="tile" href="${href}"><span style="color:var(--purple-ink)">${ic(icon)}</span><b style="font-size:13px">${label} ${n}</b><span class="muted" style="font-size:11px">${esc(sub)}</span></a>`;
-  const cats = (p.categories || []).map((c) => CATEGORIES[c]?.label).join(' · ') || '-';
+  const cats = (p.categories || []).map((c) => allCats()[c]?.label).join(' · ') || '-';
   return `
   <header class="between"><a class="icon-btn" href="#/projects" aria-label="ย้อนกลับ">${ic('back')}</a>
     <div class="row"><button class="icon-btn" data-act="openProject" data-id="${id}" aria-label="แก้ไขโปรเจกต์">${ic('edit')}</button>
@@ -474,7 +493,8 @@ function viewProject(id) {
     <div style="padding:10px;border-radius:16px;background:rgba(255,255,255,.1)"><div style="font-size:11px;color:var(--on-dark-2)">หมวด</div><b style="font-size:13px">${esc(cats)}</b></div></div>
   </section>
   <div class="between"><h2 class="h2">งานย่อย <span style="color:var(--purple-ink)">${ts.filter((x) => x.done).length}/${ts.length}</span></h2></div>
-  <form class="search" data-form="addTask" data-id="${id}" style="border-radius:20px">${ic('plus', 18, 2)}<input name="title" placeholder="เพิ่มงานย่อย แล้วกด Enter" aria-label="เพิ่มงานย่อย" autocomplete="off"></form>
+  <form class="search" data-form="addTask" data-id="${id}" style="border-radius:20px;padding-right:6px">${ic('plus', 18, 2)}<input name="title" placeholder="เพิ่มงานย่อย" aria-label="เพิ่มงานย่อย" autocomplete="off"><button class="pill-btn" style="background:var(--dark);color:var(--on-dark);border:none;height:40px">บันทึก</button></form>
+  ${ts.length ? '<div class="muted" style="font-size:12px;margin-top:-8px">ปัดงานย่อยไปทางซ้าย เพื่อใส่ to-do วันนี้ · แก้ไข · ลบ</div>' : ''}
   <div class="stack">${tasks || '<div class="empty">ยังไม่มีงานย่อย</div>'}</div>
   <h2 class="h2">ผูกไว้กับ</h2>
   <div class="grid3">${link('pin', 'สถานที่', linkedPlaces.length, linkedPlaces[0]?.name || '-', '#/records/place')}${link('person', 'คน', linkedPeople.length, linkedPeople[0]?.name || '-', '#/records/person')}${link('note', 'โน้ต', linkedNotes.length, linkedNotes[0]?.title || '-', '#/records/note')}</div>`;
@@ -727,6 +747,10 @@ const CHANGELOG = [
     'หน้าเช็กอิน: ป้ายเวลาแบบนาฬิกาพลิก พร้อมวันที่',
     'หน้าบันทึก: กด + แล้วเลือกได้ว่าจะบันทึกสถานที่ คน หรือโน้ต',
     'สถานที่: เลือกจังหวัด และแผนที่ไฮไลต์จังหวัดที่ไปมาแล้ว',
+    'โปรเจกต์: ติ๊กเสร็จได้จากหน้ารายการ และกรองตามความสำคัญ · ความด่วน',
+    'โปรเจกต์: เพิ่มหมวดเองได้ และป้ายสถานะมีสีตามสถานะ',
+    'งานย่อย: ปัดซ้ายเพื่อใส่ to-do วันนี้ · แก้ไข · ลบ',
+    'ล็อกหน้าจอไม่ให้ซูม',
     'สถานที่: เพิ่มหมวดเองพร้อมไอคอน และเพิ่มวิธีไปเองพร้อมสี',
     'สถานที่: แยกขับรถกับเดิน และช่องกรอกเปลี่ยนตามวิธีไป',
     'สถานที่: บันทึกการไป แก้ไข-ลบได้ และสร้างโปรเจกต์ใหม่จากหน้านี้ได้',
@@ -883,6 +907,8 @@ function sheetTask(id) {
 }
 
 /* ---------- โปรเจกต์ ---------- */
+const projCatsH = (cats) => Object.entries(allCats()).map(([k, v]) => `<label class="opt" style="height:56px;font-size:14px;font-weight:600"><span style="color:var(--purple-ink)">${ic(v.icon, 20)}</span><span style="flex:1">${esc(v.label)}</span><input type="checkbox" name="cat_${k}" ${cats.includes(k) ? 'checked' : ''} style="width:22px;height:22px;accent-color:#2B2B2E"></label>`).join('')
+  + `<button type="button" class="opt" data-act="toggleAdd" data-box="pcat" style="height:56px;font-size:14px;font-weight:600;border-style:dashed;justify-content:center">${ic('plus', 18, 2)}เพิ่มหมวด</button>`;
 function sheetProject(id) {
   const p = id ? byId('projects', id) : null;
   const cats = p?.categories || ['infographic'];
@@ -894,8 +920,11 @@ function sheetProject(id) {
     <div class="field"><span class="label">สถานะ</span>${optTiles('status', ['todo', 'doing', 'waiting', 'revise'].map((k) => [k, STATUS[k].label, STATUS[k].icon, stTone[k]]), ['done', 'archived'].includes(p?.status) ? '' : (p?.status || 'todo'))}</div>
     <div class="field"><span class="label">ความสำคัญ</span>${optTiles('priority', Object.entries(PRIORITY).map(([k, v]) => [k, v.label, v.icon, prTone[k]]), p?.priority || 2)}</div>
     <div class="grid2">${fieldH('วันเริ่ม', inputH('start', p?.start || today(), 'date'))}${fieldH('กำหนดส่ง', inputH('due', p?.due || '', 'date'))}</div>
-    <div class="field"><div class="between"><span class="label">หมวด</span><span class="muted" style="font-size:12px">เลือกได้ทั้ง 2 อย่าง</span></div>
-      <div class="grid2">${Object.entries(CATEGORIES).map(([k, v]) => `<label class="opt" style="height:56px;font-size:14px;font-weight:600"><span style="color:var(--purple-ink)">${ic(v.icon, 20)}</span><span style="flex:1">${v.label}</span><input type="checkbox" name="cat_${k}" ${cats.includes(k) ? 'checked' : ''} style="width:22px;height:22px;accent-color:#2B2B2E"></label>`).join('')}</div></div>
+    <div class="field"><div class="between"><span class="label">หมวด</span><span class="muted" style="font-size:12px">เลือกได้หลายหมวด</span></div>
+      <div class="grid2" id="pcat-tiles">${projCatsH(cats)}</div>
+      <div class="addbox" id="add-pcat" hidden>${inputH('newPCatName', '', 'text', 'ชื่อหมวด เช่น วิดีโอ, พอดแคสต์')}
+        <span class="label">ไอคอน</span>${swatchH('newPCatIcon', PROJ_CAT_ICONS, 'folder', (i) => ic(i, 18, 2))}
+        <button type="button" class="btn" style="height:44px;font-size:15px" data-act="addProjCat">เพิ่มหมวดนี้</button></div></div>
     <button class="btn">${p ? 'บันทึก' : 'สร้างโปรเจกต์'}</button></form>`, bindOpts);
 }
 function sheetProjectMenu(id) {
@@ -903,7 +932,7 @@ function sheetProjectMenu(id) {
   const done = ['done', 'archived'].includes(p.status);
   openSheet('จัดการโปรเจกต์', `<div class="stack">
     ${done ? `<button class="lrow" data-act="projReopen" data-id="${id}"><span class="av p2">${ic('hourglass', 18, 2)}</span><span class="grow"><span class="t">เปิดโปรเจกต์อีกครั้ง</span><span class="muted" style="font-size:12px">กลับไปเป็น "กำลังทำ"</span></span></button>`
-      : `<button class="lrow" data-act="projDone" data-id="${id}"><span class="av" style="background:var(--dark);color:var(--on-dark)">${ic('check', 18, 2.4)}</span><span class="grow"><span class="t">ทำเครื่องหมายว่าเสร็จแล้ว</span><span class="muted" style="font-size:12px">วันถัดไประบบย้ายเข้า Archive ให้เอง</span></span></button>`}
+      : ''}
     <button class="lrow" data-act="delProject" data-id="${id}"><span class="av p1">${ic('trash', 18, 2)}</span><span class="grow"><span class="t" style="color:var(--warn-ink)">ลบโปรเจกต์</span><span class="muted" style="font-size:12px">ลบงานย่อยทั้งหมดด้วย</span></span></button></div>`);
 }
 
@@ -974,7 +1003,7 @@ function sheetVisit(placeId, vid) {
     <div class="muted" style="margin-top:-6px">${esc(x.name)}</div>
     ${fieldH('ไปวันที่', inputH('date', v?.date || today(), 'date'))}
     <div class="field"><span class="label">ไปเพื่อโปรเจกต์</span>${projectSelect('projectId', v?.projectId ?? (v ? '' : db.projects.find((p) => p.status === 'doing')?.id || ''))}
-      <button type="button" class="link-btn" style="align-self:flex-start;height:36px;padding:0" data-act="visitNewProject">${ic('plus', 14, 2)} สร้างโปรเจกต์ใหม่</button>
+      <button type="button" class="pill-btn" style="align-self:flex-start;background:var(--purple);color:#1E1E20;border:none;font-weight:600" data-act="visitNewProject">${ic('plus', 16, 2)}สร้างโปรเจกต์ใหม่</button>
       <div id="newproj-box" hidden>${inputH('newProject', '', 'text', 'ชื่อโปรเจกต์ใหม่')}</div></div>
     ${fieldH('ไปทำอะไร (ถ้ามี)', inputH('note', v?.note || '', 'text', 'เช่น ประชุม, ถ่ายภาพ'))}
     <button class="btn">บันทึก</button>${v ? `<button type="button" class="btn ghost" style="color:var(--warn-ink)" data-act="delVisit" data-place="${placeId}" data-id="${vid}">ลบรายการนี้</button>` : ''}</form>`);
@@ -1055,6 +1084,7 @@ const ACT = {
     db[list] = db[list].filter((x) => x.id !== el.dataset.id); save(); closeSheet(); render();
   },
   projFilter: (el) => { ui.projFilter = el.dataset.k; render(); },
+  priFilter: (el) => { ui.priFilter = el.dataset.k && String(ui.priFilter) !== el.dataset.k ? el.dataset.k : null; render(); },
   projDone: (el) => { const p = byId('projects', el.dataset.id); p.status = 'done'; p.doneAt = today(); save(); closeSheet(); render(); toast('เยี่ยม! ปิดโปรเจกต์แล้ว'); },
   projReopen: (el) => { const p = byId('projects', el.dataset.id); p.status = 'doing'; p.doneAt = null; p.archivedAt = null; save(); closeSheet(); render(); },
   delProject: (el) => {
@@ -1084,6 +1114,14 @@ const ACT = {
     $$('[data-kind]', sh).forEach((el) => { el.hidden = !el.dataset.kind.split(' ').includes('bus'); });
     $('[name=newTrName]', sh).value = ''; $('#add-tr', sh).hidden = true; toast('เพิ่มวิธีไปแล้ว');
   },
+  addProjCat: () => {
+    const sh = $('.sheet'); const label = $('[name=newPCatName]', sh).value.trim(); if (!label) { toast('ตั้งชื่อหมวดก่อนนะ'); return; }
+    const c = { key: 'c_' + uid(), label, icon: $('[name=newPCatIcon]', sh).value || 'folder' };
+    (db.settings.projCats = db.settings.projCats || []).push(c); save();
+    const checked = Object.keys(allCats()).filter((k) => $(`[name="cat_${k}"]`, sh)?.checked).concat(c.key);
+    $('#pcat-tiles', sh).innerHTML = projCatsH(checked); $('[name=newPCatName]', sh).value = ''; $('#add-pcat', sh).hidden = true; toast('เพิ่มหมวดแล้ว');
+  },
+  delTask: (el) => { if (!confirm('ลบงานย่อยนี้?')) return; db.tasks = db.tasks.filter((x) => x.id !== el.dataset.id); save(); render(); },
   provinceList: () => {
     const been = {}; db.places.forEach((x) => { if (x.province) been[x.province] = (been[x.province] || 0) + 1; });
     const rows = Object.entries(been).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'th'));
@@ -1145,7 +1183,7 @@ const FORM = {
   project: (f, v) => {
     const id = f.dataset.id;
     const data = { name: v.name.trim(), desc: v.desc, priority: Number(v.priority) || 2, start: v.start, due: v.due || null,
-      categories: Object.keys(CATEGORIES).filter((k) => v['cat_' + k]) };
+      categories: Object.keys(allCats()).filter((k) => v['cat_' + k]) };
     if (v.status) data.status = v.status;
     if (!data.name) return false;
     if (id) Object.assign(byId('projects', id), data);
@@ -1286,6 +1324,32 @@ render();
 if (!logOf(today()) && db.settings.lastCheckinPrompt !== today() && (location.hash || '#/today').startsWith('#/today')) {
   db.settings.lastCheckinPrompt = today(); save(); setTimeout(sheetCheckin, 300);
 }
+/* ปัดงานย่อยไปทางซ้ายเพื่อโชว์ปุ่ม วันนี้ · แก้ไข · ลบ */
+let swipeS = null;
+document.addEventListener('touchstart', (e) => {
+  const row = e.target.closest('.swipe-row'); if (!row) return;
+  $$('.swipe-row.open').forEach((r) => { if (r !== row) { r.classList.remove('open'); r.style.transform = ''; } });
+  swipeS = { row, x: e.touches[0].clientX, y: e.touches[0].clientY, base: row.classList.contains('open') ? -row.previousElementSibling.offsetWidth : 0, dx: 0, lock: null };
+}, { passive: true });
+document.addEventListener('touchmove', (e) => {
+  if (!swipeS) return;
+  const dx = e.touches[0].clientX - swipeS.x; const dy = e.touches[0].clientY - swipeS.y;
+  if (swipeS.lock === null && Math.abs(dx) + Math.abs(dy) > 8) swipeS.lock = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+  if (swipeS.lock !== 'x') return;
+  const w = swipeS.row.previousElementSibling.offsetWidth;
+  swipeS.dx = Math.max(-w, Math.min(0, swipeS.base + dx));
+  swipeS.row.style.transition = 'none'; swipeS.row.style.transform = `translateX(${swipeS.dx}px)`;
+}, { passive: true });
+document.addEventListener('touchend', () => {
+  if (!swipeS) return; const { row, lock, dx } = swipeS; swipeS = null;
+  if (lock !== 'x') return;
+  const w = row.previousElementSibling.offsetWidth; const open = dx < -w / 3;
+  row.style.transition = ''; row.style.transform = open ? `translateX(${-w}px)` : ''; row.classList.toggle('open', open);
+});
+// ล็อกไม่ให้ซูม (iOS ไม่สนใจ user-scalable=no เลยต้องกัน gesture เอง)
+['gesturestart', 'gesturechange'].forEach((t) => document.addEventListener(t, (e) => e.preventDefault()));
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => { const n = Date.now(); if (n - lastTouchEnd < 300 && !e.target.closest('input, textarea, select')) e.preventDefault(); lastTouchEnd = n; }, { passive: false });
 // ไอคอนปฏิทิน/นาฬิกาเป็นภาพของเราเอง → แตะช่องแล้วเปิดตัวเลือกให้เลย
 document.addEventListener('click', (e) => { const el = e.target.closest?.('input[type="date"], input[type="time"]'); if (el && el.showPicker) try { el.showPicker(); } catch {} });
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
