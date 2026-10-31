@@ -21,6 +21,7 @@ function bindOpts(root) {
   root.addEventListener('click', (e) => {
     const b = e.target.closest('[data-opt]'); if (!b) return;
     const name = b.dataset.opt;
+    if (b.dataset.toggle && b.classList.contains('on')) { b.classList.remove('on'); $(`input[name="${name}"]`, root).value = ''; return; }
     $$(`[data-opt="${name}"]`, root).forEach((x) => { x.classList.remove('on'); x.style.background = ''; });
     b.classList.add('on'); if (b.dataset.bg) b.style.background = b.dataset.bg;
     $(`input[name="${name}"]`, root).value = b.dataset.v;
@@ -161,21 +162,58 @@ function sheetAddRecord() {
     ${opt('openPerson', 'person', 'คน', 'คนที่เจอ · องค์กร · เรื่องที่คุย')}
     ${opt('openNote', 'note', 'โน้ต', 'จดไอเดียหรือเรื่องที่อยากจำ')}</div>`);
 }
+const tileStyle = 'flex-direction:column;justify-content:center;gap:3px;height:60px;font-size:11px;font-weight:600;padding:0 2px;text-align:center;line-height:1.25';
+// แตะหมวดที่เลือกอยู่ซ้ำ = ยกเลิกการเลือก
+const catTilesH = (cur) => `${placeCats().map((c) => `<button type="button" class="opt ${c.name === cur ? 'on' : ''}" data-opt="cat" data-toggle="1" data-v="${esc(c.name)}" style="${tileStyle}"><span style="color:var(--purple-ink)">${ic(c.icon, 18, 2)}</span>${esc(c.name)}</button>`).join('')}<button type="button" class="opt" data-act="toggleAdd" data-box="cat" style="${tileStyle};border-style:dashed">${ic('plus', 18, 2)}เพิ่มหมวด</button>`;
+const trTilesH = (cur) => `${Object.entries(allTransit()).map(([k, v]) => `<button type="button" class="opt ${cur === k ? 'on' : ''}" data-opt="transit" data-v="${k}" style="${tileStyle}"><span class="dot" style="width:10px;height:10px;background:${v.color}"></span>${esc(v.label)}</button>`).join('')}<button type="button" class="opt" data-act="toggleAdd" data-box="tr" style="${tileStyle};border-style:dashed">${ic('plus', 18, 2)}เพิ่มวิธีไป</button>`;
+const swatchH = (name, list, cur, render) => `<div class="row" style="flex-wrap:wrap;gap:6px">${list.map((v) => `<button type="button" class="opt ${v === cur ? 'on' : ''}" data-opt="${name}" data-v="${v}" style="width:44px;height:44px;min-height:0;padding:0;justify-content:center">${render(v)}</button>`).join('')}</div><input type="hidden" name="${name}" value="${cur}">`;
 function sheetPlace(id) {
   const x = id ? byId('places', id) : {};
+  const tr = x.transit || 'bts';
+  const show = (kinds) => `data-kind="${kinds}" ${kinds.split(' ').includes(transitKind(tr)) ? '' : 'hidden'}`;
+  const grid = 'display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px';
   openSheet(id ? 'แก้ไขสถานที่' : 'สถานที่ใหม่', `<form class="stack" style="gap:14px" data-form="place" data-id="${id || ''}">
     ${fieldH('ชื่อสถานที่', inputH('name', x.name || ''))}
+    ${fieldH('จังหวัด', `<select class="input" name="province"><option value="">เลือกจังหวัด</option>${PROVINCES.map((n) => `<option ${n === x.province ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}
+    <div class="field"><span class="label">หมวด</span><div id="cat-tiles" style="${grid}">${catTilesH(x.cat || '')}</div><input type="hidden" name="cat" value="${esc(x.cat || '')}">
+      <div class="addbox" id="add-cat" hidden>${inputH('newCatName', '', 'text', 'ชื่อหมวด เช่น โรงพยาบาล')}
+        <span class="label">ไอคอน</span>${swatchH('newCatIcon', CAT_ICONS, 'pin', (i) => ic(i, 18, 2))}
+        <button type="button" class="btn" style="height:44px;font-size:15px" data-act="addCat">เพิ่มหมวดนี้</button></div></div>
     ${fieldH('ที่อยู่', inputH('address', x.address || ''))}
     ${fieldH('ลิงก์แผนที่', inputH('mapUrl', x.mapUrl || '', 'url', 'https://maps…'))}
-    <div class="field"><div class="between"><span class="label">วิธีไป</span><span class="muted" style="font-size:12px">แตะเพื่อเปลี่ยน</span></div>
-      <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px">${Object.entries(TRANSIT).map(([k, v]) => `<button type="button" class="opt ${(x.transit || 'bts') === k ? 'on' : ''}" data-opt="transit" data-v="${k}" style="flex-direction:column;justify-content:center;gap:3px;height:56px;font-size:11px;font-weight:600;padding:0"><span class="dot" style="width:10px;height:10px;background:${v.color}"></span>${v.label}</button>`).join('')}</div><input type="hidden" name="transit" value="${x.transit || 'bts'}"></div>
-    <div class="grid2">${fieldH('สาย', inputH('line', x.line || '', 'text', 'สุขุมวิท'))}${fieldH('สถานี', inputH('station', x.station || ''))}</div>
-    <div class="grid2">${fieldH('ทางออก', inputH('exit', x.exit || ''))}${fieldH('เดินต่อ (นาที)', inputH('walk', x.walk || '', 'number'))}</div>
-    ${fieldH('วิธีเดินต่อ (บรรทัดละขั้น)', areaH('steps', x.steps || '', 'ลงทางออก 3 แล้วเดินตรง'))}
+    <div class="field"><span class="label">วิธีไป</span><div id="tr-tiles" style="${grid}">${trTilesH(tr)}</div><input type="hidden" name="transit" value="${tr}">
+      <div class="addbox" id="add-tr" hidden>${inputH('newTrName', '', 'text', 'ชื่อวิธีไป เช่น เรือ, รถตู้, BRT')}
+        <span class="label">สี</span>${swatchH('newTrColor', TR_COLORS, TR_COLORS[4], (c) => `<span class="dot" style="width:20px;height:20px;background:${c}"></span>`)}
+        <button type="button" class="btn" style="height:44px;font-size:15px" data-act="addTransit">เพิ่มวิธีไปนี้</button></div></div>
+    <div class="grid2" ${show('rail')}>${fieldH('สาย', inputH('line', x.line || '', 'text', 'สุขุมวิท'))}${fieldH('สถานี', inputH('station', x.station || ''))}</div>
+    <div class="grid2" ${show('bus')}>${fieldH('สาย / เส้นทาง', inputH('busLine', transitKind(tr) === 'bus' ? x.line || '' : '', 'text', 'เช่น 8, 29'))}${fieldH('ป้าย / จุดที่ลง', inputH('busStop', transitKind(tr) === 'bus' ? x.station || '' : ''))}</div>
+    <div class="grid2" ${show('rail')}>${fieldH('ทางออก', inputH('exit', x.exit || ''))}${fieldH('เดินต่อ (นาที)', inputH('walk', x.walk || '', 'number'))}</div>
+    <div class="grid2" ${show('car')}>${fieldH('ที่จอดรถ', inputH('parking', x.parking || ''))}${fieldH('ขับรถ (นาที)', inputH('driveMin', x.driveMin || '', 'number'))}</div>
+    <div ${show('walk')}>${fieldH('เดิน (นาที)', inputH('walkMin', x.transit === 'walk' ? x.walk || '' : '', 'number'))}</div>
+    ${fieldH('วิธีไปต่อ (บรรทัดละขั้น)', areaH('steps', x.steps || '', 'เช่น ลงทางออก 3 แล้วเดินตรง'))}
     <div class="grid2">${fieldH('แลกบัตร', inputH('card', x.card || ''))}${fieldH('ลิฟต์ / ชั้น', inputH('lift', x.lift || ''))}</div>
-    <div class="grid2">${fieldH('ค่าโดยสาร', inputH('fare', x.fare || ''))}${fieldH('ที่จอดรถ', inputH('parking', x.parking || ''))}</div>
+    <div class="grid2" ${show('rail bus')}>${fieldH('ค่าโดยสาร', inputH('fare', x.fare || ''))}${fieldH('ที่จอดรถ', inputH('parking2', x.parking || ''))}</div>
     ${fieldH('โน้ต', areaH('note', x.note || ''))}
-    <button class="btn">บันทึก</button>${id ? `<button type="button" class="btn ghost" style="color:var(--warn-ink)" data-act="delRecord" data-list="places" data-id="${id}">ลบสถานที่นี้</button>` : ''}</form>`, bindOpts);
+    <button class="btn">บันทึก</button>${id ? `<button type="button" class="btn ghost" style="color:var(--warn-ink)" data-act="delRecord" data-list="places" data-id="${id}">ลบสถานที่นี้</button>` : ''}</form>`, (sh) => {
+    bindOpts(sh);
+    sh.addEventListener('optchange', (e) => {
+      if (e.detail.name !== 'transit') return;
+      const k = transitKind(e.detail.v);
+      $$('[data-kind]', sh).forEach((el) => { el.hidden = !el.dataset.kind.split(' ').includes(k); });
+    });
+  });
+}
+/* บันทึกการไป: ไปวันไหน ไปทำอะไร (ผูกโปรเจกต์ได้) */
+function sheetVisit(placeId, vid) {
+  const x = byId('places', placeId); const v = vid ? (x.visits || []).find((y) => y.id === vid) : null;
+  openSheet(v ? 'แก้ไขการไป' : 'บันทึกการไปที่นี่', `<form class="stack" style="gap:14px" data-form="visit" data-place="${placeId}" data-id="${vid || ''}">
+    <div class="muted" style="margin-top:-6px">${esc(x.name)}</div>
+    ${fieldH('ไปวันที่', inputH('date', v?.date || today(), 'date'))}
+    <div class="field"><span class="label">ไปเพื่อโปรเจกต์</span>${projectSelect('projectId', v?.projectId ?? (v ? '' : db.projects.find((p) => p.status === 'doing')?.id || ''))}
+      <button type="button" class="link-btn" style="align-self:flex-start;height:36px;padding:0" data-act="visitNewProject">${ic('plus', 14, 2)} สร้างโปรเจกต์ใหม่</button>
+      <div id="newproj-box" hidden>${inputH('newProject', '', 'text', 'ชื่อโปรเจกต์ใหม่')}</div></div>
+    ${fieldH('ไปทำอะไร (ถ้ามี)', inputH('note', v?.note || '', 'text', 'เช่น ประชุม, ถ่ายภาพ'))}
+    <button class="btn">บันทึก</button>${v ? `<button type="button" class="btn ghost" style="color:var(--warn-ink)" data-act="delVisit" data-place="${placeId}" data-id="${vid}">ลบรายการนี้</button>` : ''}</form>`);
 }
 function sheetPerson(id) {
   const x = id ? byId('people', id) : {};
@@ -266,9 +304,33 @@ const ACT = {
     db[el.dataset.list] = db[el.dataset.list].filter((x) => x.id !== el.dataset.id); save(); closeSheet();
     location.hash = '#/records/' + ({ places: 'place', people: 'person', notes: 'note' }[el.dataset.list]);
   },
-  addVisit: (el) => {
-    const x = byId('places', el.dataset.id); const pid = db.projects.find((p) => p.status === 'doing')?.id || '';
-    (x.visits = x.visits || []).push({ date: today(), projectId: pid }); save(); render(); toast('บันทึกการมาวันนี้แล้ว');
+  toggleAdd: (el) => { const b = $('#add-' + el.dataset.box); b.hidden = !b.hidden; if (!b.hidden) $('input', b).focus(); },
+  addCat: () => {
+    const sh = $('.sheet'); const name = $('[name=newCatName]', sh).value.trim(); if (!name) { toast('ตั้งชื่อหมวดก่อนนะ'); return; }
+    const icon = $('[name=newCatIcon]', sh).value || 'pin';
+    db.settings.placeCats = placeCats().filter((c) => c.name !== name).concat({ name, icon }); save();
+    $('#cat-tiles', sh).innerHTML = catTilesH(name); $('[name=cat]', sh).value = name;
+    $('[name=newCatName]', sh).value = ''; $('#add-cat', sh).hidden = true; toast('เพิ่มหมวดแล้ว');
+  },
+  addTransit: () => {
+    const sh = $('.sheet'); const label = $('[name=newTrName]', sh).value.trim(); if (!label) { toast('ตั้งชื่อวิธีไปก่อนนะ'); return; }
+    const t = { id: 'tr_' + uid(), label, color: $('[name=newTrColor]', sh).value };
+    (db.settings.transits = db.settings.transits || []).push(t); save();
+    $('#tr-tiles', sh).innerHTML = trTilesH(t.id); $('[name=transit]', sh).value = t.id;
+    $$('[data-kind]', sh).forEach((el) => { el.hidden = !el.dataset.kind.split(' ').includes('bus'); });
+    $('[name=newTrName]', sh).value = ''; $('#add-tr', sh).hidden = true; toast('เพิ่มวิธีไปแล้ว');
+  },
+  provinceList: () => {
+    const been = {}; db.places.forEach((x) => { if (x.province) been[x.province] = (been[x.province] || 0) + 1; });
+    const rows = Object.entries(been).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'th'));
+    openSheet(`จังหวัดที่ไปมาแล้ว · ${rows.length}`, `<div class="stack" style="gap:0">${rows.map(([p, c]) => `<div class="between" style="padding:12px 2px;border-top:1px solid var(--line)"><span>${esc(p)}</span><span class="muted">${c} แห่ง</span></div>`).join('')}</div>`);
+  },
+  addVisit: (el) => sheetVisit(el.dataset.id),
+  editVisit: (el) => sheetVisit(el.dataset.place, el.dataset.id),
+  visitNewProject: (el) => { const b = $('#newproj-box'); b.hidden = false; $('input', b).focus(); el.hidden = true; },
+  delVisit: (el) => {
+    if (!confirm('ลบรายการนี้?')) return;
+    const x = byId('places', el.dataset.place); x.visits = (x.visits || []).filter((v) => v.id !== el.dataset.id); save(); closeSheet(); render();
   },
   goCalendar: (el) => { ui.calSel = el.dataset.k; ui.calMonth = el.dataset.k.slice(0, 7); location.hash = '#/calendar'; },
   calSel: (el) => { ui.calSel = el.dataset.k; render(); },
@@ -332,7 +394,20 @@ const FORM = {
   },
   place: (f, v) => {
     const id = f.dataset.id; if (!v.name.trim()) return false;
+    const kind = transitKind(v.transit);
+    if (kind === 'bus') { v.line = v.busLine; v.station = v.busStop; }
+    if (kind === 'walk') v.walk = v.walkMin;
+    if (kind !== 'car') v.parking = v.parking2;
+    ['busLine', 'busStop', 'parking2', 'walkMin', 'newCatName', 'newCatIcon', 'newTrName', 'newTrColor'].forEach((k) => delete v[k]);
     if (id) Object.assign(byId('places', id), v); else { const x = { id: uid(), createdAt: today(), visits: [], ...v }; db.places.push(x); setTimeout(() => (location.hash = '#/place/' + x.id)); }
+  },
+  visit: (f, v) => {
+    const x = byId('places', f.dataset.place);
+    if (v.newProject?.trim()) { const p = { id: uid(), name: v.newProject.trim(), status: 'doing', priority: 2, start: today(), categories: [], createdAt: today() }; db.projects.push(p); v.projectId = p.id; }
+    delete v.newProject;
+    x.visits = (x.visits || []).map((y) => (y.id ? y : { ...y, id: uid() }));
+    if (f.dataset.id) Object.assign(x.visits.find((y) => y.id === f.dataset.id), v); else x.visits.push({ id: uid(), ...v });
+    toast('บันทึกแล้ว');
   },
   person: (f, v) => {
     const id = f.dataset.id; if (!v.name.trim()) return false;

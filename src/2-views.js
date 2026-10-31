@@ -259,8 +259,8 @@ function viewRecords(tab) {
     rows.push(...db.projects.filter((p) => hit(p.name, p.desc)).map((p) => recRow('#/project/' + p.id, ic('folder', 18, 2), 'p2', p.name, 'โปรเจกต์ · ' + STATUS[p.status].label)));
   }
   if (q || ui.recTab === 'place') rows.push(...db.places.filter((x) => hit(x.name, x.address, x.station, x.note)).map((x) => {
-    const tr = TRANSIT[x.transit] || TRANSIT.car; const last = (x.visits || []).map((v) => v.date).sort().pop();
-    return recRow('#/place/' + x.id, tr.label, '', x.name, [x.station && `${tr.label} ${x.station}`, x.exit && `ทางออก ${x.exit}`, last && `ไปล่าสุด ${fmtShort(last)}`].filter(Boolean).join(' · '), `background:${tr.color};color:#fff`);
+    const tr = trOf(x.transit); const last = (x.visits || []).map((v) => v.date).sort().pop();
+    return recRow('#/place/' + x.id, { car: ic('car', 18, 2), walk: ic('walk', 18, 2) }[transitKind(x.transit)] || (tr.label.length > 4 ? ic('train', 18, 2) : esc(tr.label)), '', x.name, [x.cat, x.province, x.station && `${tr.label} ${x.station}`, last && `ไปล่าสุด ${fmtShort(last)}`].filter(Boolean).join(' · '), `background:${tr.color};color:#fff`);
   }));
   if (q || ui.recTab === 'person') rows.push(...db.people.filter((x) => hit(x.name, x.nickname, x.org, x.topics, x.looks)).map((x) => recRow('#/person/' + x.id, esc((x.name || '?').trim()[0]), '', x.name, [x.org, x.metDate && fmtShort(x.metDate)].filter(Boolean).join(' · '), 'background:var(--purple);color:#1E1E20;font-size:17px')));
   if (q || ui.recTab === 'note') rows.push(...db.notes.filter((x) => hit(x.title, x.body, x.tags)).map((x) => {
@@ -271,14 +271,29 @@ function viewRecords(tab) {
   <header class="top"><h1 class="h1">บันทึก</h1><button class="icon-btn dark" data-act="addRecord" aria-label="เพิ่มบันทึก">${ic('plus', 20, 2)}</button></header>
   <label class="search">${ic('search')}<input id="recq" value="${esc(ui.recQuery)}" placeholder="ค้นหาทุกอย่าง: โปรเจกต์ สถานที่ คน โน้ต" aria-label="ค้นหารวม"></label>
   ${q ? '' : `<div class="statgrid" role="tablist">${tabs}</div>`}
+  ${!q && ui.recTab === 'place' ? provinceMap() : ''}
   <div class="stack" id="rec-list">${rows.join('') || `<div class="empty">${q ? 'ไม่พบผลลัพธ์' : 'ยังไม่มีบันทึก กด + เพื่อเพิ่ม'}</div>`}</div>`;
+}
+/* แผนที่จังหวัดที่ไปมาแล้ว (นับจากสถานที่ที่ระบุจังหวัด) */
+function provinceMap() {
+  const been = {}; db.places.forEach((x) => { if (x.province) been[x.province] = (been[x.province] || 0) + 1; });
+  const n = Object.keys(been).length;
+  const paths = Object.entries(TH_MAP.p).map(([name, d]) => `<path d="${d}" class="${been[name] ? 'on' : ''}"><title>${name}${been[name] ? ' · ' + been[name] + ' แห่ง' : ''}</title></path>`).join('');
+  return `<section class="card thmap">
+    <svg viewBox="0 0 ${TH_MAP.w} ${TH_MAP.h}" role="img" aria-label="แผนที่จังหวัดที่ไปมาแล้ว ${n} จังหวัด">${paths}</svg>
+    <div class="stack" style="gap:10px;min-width:0">
+      <div><div class="muted" style="font-size:12px">ไปมาแล้ว</div><div><b style="font-size:30px;line-height:1.2">${n}</b><span class="muted"> / 77 จังหวัด</span></div></div>
+      <div class="bar" style="flex:none;color:var(--purple)"><i style="width:${Math.round((n / 77) * 100)}%"></i></div>
+      ${n ? `<button class="link-btn" style="align-self:flex-start;padding:0;display:inline-flex;align-items:center;gap:4px;white-space:nowrap" data-act="provinceList">ดูรายชื่อจังหวัด ${ic('right', 14, 2)}</button>` : '<span class="muted" style="font-size:12px">เลือกจังหวัดตอนเพิ่มสถานที่ แผนที่จะไฮไลต์ให้</span>'}
+    </div></section>`;
 }
 const recRow = (href, badge, cls, title, sub, style = '') =>
   `<a class="lrow" href="${href}"><span class="av ${cls}" style="${style}">${badge}</span><span class="grow"><span class="t">${esc(title)}</span><span class="muted" style="font-size:12px">${esc(sub)}</span></span>${ic('right', 16, 2)}</a>`;
 
 function viewPlace(id) {
   const x = byId('places', id); if (!x) return `<div class="empty">ไม่พบสถานที่</div>`;
-  const tr = TRANSIT[x.transit] || TRANSIT.car;
+  const tr = trOf(x.transit);
+  if ((x.visits || []).some((v) => !v.id)) { x.visits = x.visits.map((v) => (v.id ? v : { ...v, id: uid() })); save(); }
   const visits = (x.visits || []).slice().sort((a, b) => b.date.localeCompare(a.date));
   const steps = (x.steps || '').split('\n').filter(Boolean);
   const box = (icon, l, v) => v ? `<div class="tile"><span style="color:var(--purple-ink)">${ic(icon)}</span><span class="muted" style="font-size:12px">${l}</span><b>${esc(v)}</b></div>` : '';
@@ -287,19 +302,24 @@ function viewPlace(id) {
     <div class="row"><button class="icon-btn" data-act="openPlace" data-id="${id}" aria-label="แก้ไขสถานที่">${ic('edit')}</button>
     ${x.mapUrl ? `<a class="icon-btn dark" href="${esc(x.mapUrl)}" target="_blank" rel="noopener" aria-label="เปิดในแผนที่">${ic('map')}</a>` : ''}</div></header>
   <div><div class="muted">สถานที่ · ไปมาแล้ว ${visits.length} ครั้ง${visits[0] ? ' · ล่าสุด ' + fmtShort(visits[0].date) : ''}</div>
-  <h1 class="h1" style="font-size:26px">${esc(x.name)}</h1>${x.address ? `<div class="muted" style="font-size:14px">${esc(x.address)}</div>` : ''}</div>
+  <h1 class="h1" style="font-size:26px">${esc(x.name)}</h1>${x.cat || x.province ? `<div class="row" style="flex-wrap:wrap;margin:4px 0">${x.cat ? `<span class="chip p2">${ic(catIcon(x.cat), 12, 2)}${esc(x.cat)}</span>` : ''}${x.province ? `<span class="chip p4">${ic('pin', 12, 2)}${esc(x.province)}</span>` : ''}</div>` : ''}${x.address ? `<div class="muted" style="font-size:14px">${esc(x.address)}</div>` : ''}</div>
   <section class="card dark hero">
     <b style="font-size:13px;color:var(--purple)">วิธีไป</b>
-    <div class="row" style="gap:14px"><span class="av" style="width:56px;height:56px;border-radius:18px;background:${tr.color};color:#fff">${ic('train', 28)}</span>
+    ${['car', 'walk'].includes(transitKind(x.transit)) ? `<div class="row" style="gap:14px"><span class="av" style="width:56px;height:56px;border-radius:18px;background:${tr.color};color:#fff">${ic(transitKind(x.transit), 28)}</span>
+      <div><div style="font-size:13px;font-weight:600">${tr.label}</div><div style="font-size:24px;font-weight:700;line-height:1.35">${(x.transit === 'walk' ? x.walk : x.driveMin) ? '~' + esc(x.transit === 'walk' ? x.walk : x.driveMin) + ' นาที' : esc(x.province || '-')}</div></div></div>
+    ${x.parking ? `<div style="padding:14px;border-radius:20px;background:var(--purple);color:#1E1E20"><div style="font-size:12px">ที่จอดรถ</div><div style="font-size:20px;font-weight:700;line-height:1.4">${esc(x.parking)}</div></div>` : ''}` : `    <div class="row" style="gap:14px"><span class="av" style="width:56px;height:56px;border-radius:18px;background:${tr.color};color:#fff">${ic('train', 28)}</span>
       <div><div style="font-size:13px;font-weight:600">${tr.label}${x.line ? ' ' + esc(x.line) : ''}</div><div style="font-size:24px;font-weight:700;line-height:1.35">${esc(x.station || '-')}</div></div></div>
     <div class="grid2"><div style="padding:14px;border-radius:20px;background:var(--purple);color:#1E1E20"><div style="font-size:12px">ทางออก</div><div style="font-size:34px;font-weight:700;line-height:1.2">${esc(x.exit || '-')}</div></div>
       <div style="padding:14px;border-radius:20px;background:rgba(255,255,255,.1)"><div style="font-size:12px;color:var(--on-dark-2)">เดินต่อ</div><div style="font-size:22px;font-weight:700;line-height:1.4">${x.walk ? '~' + esc(x.walk) + ' นาที' : '-'}</div></div></div>
+`}
     ${steps.map((s, i) => `<div class="row" style="align-items:flex-start;gap:12px"><span class="av" style="width:24px;height:24px;font-size:12px;background:rgba(255,255,255,.15)">${i + 1}</span><div>${esc(s)}</div></div>`).join('')}
   </section>
   <div class="grid2">${box('card', 'แลกบัตร', x.card)}${box('lift', 'ลิฟต์', x.lift)}${box('coin', 'ค่าโดยสาร', x.fare)}${box('parking', 'ที่จอดรถ', x.parking)}</div>
   ${x.note ? `<div class="card"><div class="label">โน้ต</div><div style="font-size:14px">${esc(x.note)}</div></div>` : ''}
-  <div class="between"><b class="label">เคยมาเพราะ</b><button class="pill-btn" data-act="addVisit" data-id="${id}">${ic('plus', 16, 2)}มาวันนี้</button></div>
-  <div class="row" style="flex-wrap:wrap">${visits.map((v) => `<span class="chip p2" style="font-weight:500">${esc(byId('projects', v.projectId)?.name || 'ไม่ผูกโปรเจกต์')} · ${fmtShort(v.date)}</span>`).join('') || '<span class="muted">ยังไม่มีบันทึกการมา</span>'}</div>`;
+  <section class="card stack" style="gap:10px">
+    <div class="between"><div><b>บันทึกการไป</b><div class="muted" style="font-size:12px">ไปวันไหน · ไปเพื่อโปรเจกต์อะไร</div></div><button class="pill-btn" data-act="addVisit" data-id="${id}">${ic('plus', 16, 2)}เพิ่ม</button></div>
+    ${visits.map((v) => `<button class="lrow" style="padding:10px 4px;border-radius:0;border-top:1px solid var(--line);background:transparent" ${v.id ? `data-act="editVisit" data-place="${id}" data-id="${v.id}"` : ''}><span class="grow"><span class="t" style="font-weight:500">${esc(byId('projects', v.projectId)?.name || 'ไม่ผูกโปรเจกต์')}</span><span class="muted" style="font-size:12px">${fmtFull(v.date)}${v.note ? ' · ' + esc(v.note) : ''}</span></span>${ic('edit', 16, 2)}</button>`).join('') || '<div class="muted">ยังไม่มีบันทึก กด "เพิ่ม" เมื่อไปที่นี่</div>'}
+  </section>`;
 }
 
 function viewPerson(id) {
@@ -383,6 +403,10 @@ const CHANGELOG = [
     'หน้าเช็กอิน: ช่องข้อมูลการลาแสดงเฉพาะเมื่อเลือก "ลา"',
     'หน้าเช็กอิน: ป้ายเวลาแบบนาฬิกาพลิก พร้อมวันที่',
     'หน้าบันทึก: กด + แล้วเลือกได้ว่าจะบันทึกสถานที่ คน หรือโน้ต',
+    'สถานที่: เลือกจังหวัด และแผนที่ไฮไลต์จังหวัดที่ไปมาแล้ว',
+    'สถานที่: เพิ่มหมวดเองพร้อมไอคอน และเพิ่มวิธีไปเองพร้อมสี',
+    'สถานที่: แยกขับรถกับเดิน และช่องกรอกเปลี่ยนตามวิธีไป',
+    'สถานที่: บันทึกการไป แก้ไข-ลบได้ และสร้างโปรเจกต์ใหม่จากหน้านี้ได้',
     'เพิ่ม "มีอะไรใหม่" ในหน้าตั้งค่า',
     'เอาปุ่มใส่ข้อมูลตัวอย่างออกจากหน้าตั้งค่า',
   ] },

@@ -64,6 +64,15 @@ const P = {
   parking: 'M4 4h16v16H4zM10 16V8h3a2.5 2.5 0 0 1 0 5h-3',
   eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6',
   chat: 'M4 5h16v11H9l-5 4z',
+  food: 'M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 0-3 2-3 6h3v12',
+  cup: 'M5 8h11v6a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5zM16 10h2a2 2 0 0 1 0 4h-2M8 3v2M11 3v2',
+  bed: 'M3 19V6M3 14h18v5M21 14v-2a3 3 0 0 0-3-3h-7v5M7 12a2 2 0 1 0 0-4a2 2 0 1 0 0 4',
+  bag: 'M5 8h14l-1 13H6zM9 8V6a3 3 0 0 1 6 0v2',
+  tree: 'M12 3l6 8h-4l4 6H6l4-6H6zM12 17v4',
+  heart: 'M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z',
+  plane: 'M10 14l-6-2 1-2 7 0 4-6h2l-2 6h4l2-2h1l-1 4 1 4h-1l-2-2h-4l2 6h-2l-4-6',
+  car: 'M4 16v-4l2-5h12l2 5v4zM4 16v2M20 16v2M8 13h.01M16 13h.01',
+  walk: 'M13 5a1.5 1.5 0 1 0 0-.01M10 21l2-6 3 3v3M8 12l3-4h3l2 4 2 1M11 8l-1 7',
   train: 'M5 3h14v14H5zM5 11h14M8 21l2-4M16 21l-2-4',
 };
 const ic = (name, size = 20, sw = 1.8, extra = '') =>
@@ -101,12 +110,26 @@ const MOODS = [
   { label: 'สบาย ๆ วันเบา ๆ', desc: 'วันเบา ๆ ได้หายใจบ้าง', color: '#F08A4B' },
   { label: 'ดีมาก', desc: 'วันที่ดีมาก ทำได้เกินคาด', color: '#C9A7F5' },
 ];
+const CAT_ICONS = ['pin', 'building', 'home', 'food', 'cup', 'bed', 'bag', 'tree', 'heart', 'star', 'plane', 'chat'];
+// หมวดสถานที่ที่ผู้ใช้เพิ่มเอง [{ name, icon }] (ข้อมูลเก่าที่เป็นข้อความล้วนแปลงให้)
+const placeCats = () => {
+  const list = (db.settings.placeCats || []).map((c) => (typeof c === 'string' ? { name: c, icon: 'pin' } : c));
+  db.places.forEach((x) => { if (x.cat && !list.some((c) => c.name === x.cat)) list.push({ name: x.cat, icon: 'pin' }); });
+  return list;
+};
+const catIcon = (name) => placeCats().find((c) => c.name === name)?.icon || 'pin';
+// ช่องที่แสดงตามวิธีไป: rail = รถไฟฟ้า, bus = รถเมล์/วิธีที่เพิ่มเอง, car = ขับรถ, walk = เดิน
+const transitKind = (t) => ({ bus: 'bus', car: 'car', walk: 'walk' }[t] || (TRANSIT[t] ? 'rail' : 'bus'));
+const allTransit = () => ({ ...TRANSIT, ...Object.fromEntries((db.settings.transits || []).map((t) => [t.id, t])) });
+const trOf = (k) => allTransit()[k] || TRANSIT.car;
+const TR_COLORS = ['#2E9E4F', '#1F4FA8', '#C8302F', '#E08A1E', '#7C4DCC', '#D6457E', '#1A9AA0', '#71717A'];
 const TRANSIT = {
   bts: { label: 'BTS', color: '#2E9E4F' },
   mrt: { label: 'MRT', color: '#1F4FA8' },
   arl: { label: 'ARL', color: '#C8302F' },
   bus: { label: 'รถเมล์', color: '#E08A1E' },
-  car: { label: 'รถ / เดิน', color: '#71717A' },
+  car: { label: 'ขับรถ', color: '#71717A' },
+  walk: { label: 'เดิน', color: '#A1A1AA' },
 };
 
 /* ---------- วันที่ (ภาษาไทย ปี พ.ศ.) ---------- */
@@ -135,7 +158,7 @@ const blank = () => ({
   schemaVersion: SCHEMA,
   projects: [], tasks: [], todos: [], timeLogs: [], appts: [],
   places: [], people: [], notes: [],
-  settings: { theme: 'system', lastBackup: null, lastRollover: null, lastCheckinPrompt: null, todayOrder: {} },
+  settings: { placeCats: [], transits: [], theme: 'system', lastBackup: null, lastRollover: null, lastCheckinPrompt: null, todayOrder: {} },
 });
 let db = load();
 function load() {
