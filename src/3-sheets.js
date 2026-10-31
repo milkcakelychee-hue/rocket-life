@@ -296,6 +296,7 @@ const ACT = {
     db[list] = db[list].filter((x) => x.id !== el.dataset.id); save(); closeSheet(); render();
   },
   projFilter: (el) => { ui.projFilter = el.dataset.k; render(); },
+  closeMode: () => { ui.closeMode = !ui.closeMode; render(); },
   priFilter: (el) => { ui.priFilter = el.dataset.k && String(ui.priFilter) !== el.dataset.k ? el.dataset.k : null; render(); },
   projDone: (el) => { const p = byId('projects', el.dataset.id); p.status = 'done'; p.doneAt = today(); save(); closeSheet(); render(); toast('เยี่ยม! ปิดโปรเจกต์แล้ว'); },
   projReopen: (el) => { const p = byId('projects', el.dataset.id); p.status = 'doing'; p.doneAt = null; p.archivedAt = null; save(); closeSheet(); render(); },

@@ -1,7 +1,7 @@
 /* =========================================================
    หน้าจอ (views) — แต่ละฟังก์ชันคืน HTML ของหน้านั้น
    ========================================================= */
-const ui = { projFilter: 'all', priFilter: null, calMonth: null, calSel: null, recTab: 'place', recQuery: '', statPeriod: 'week', archiveYear: null };
+const ui = { projFilter: 'all', closeMode: false, priFilter: null, calMonth: null, calSel: null, recTab: 'place', recQuery: '', statPeriod: 'week', archiveYear: null };
 
 /* ---------- เมนูล่าง ---------- */
 function renderTabbar(active) {
@@ -111,7 +111,7 @@ function viewProjects() {
     <div class="row"><a class="icon-btn" href="#/records" aria-label="ค้นหา">${ic('search')}</a></div></header>
   <section class="stack" style="gap:8px"><div class="label">แยกตามสถานะ</div><div class="statgrid mini">${sg}</div></section>
   <section class="stack" style="gap:8px"><div class="between"><span class="label">แยกตามความสำคัญ · ความด่วน</span>${ui.priFilter ? '<button class="link-btn" style="height:28px;padding:0;font-size:13px" data-act="priFilter" data-k="">ล้างตัวกรอง</button>' : ''}</div><div class="grid2 mini">${pg}</div></section>
-  <button class="pill-btn" style="height:48px;justify-content:center;border-style:dashed" data-act="openProject">${ic('plus', 18, 2)}โปรเจกต์ใหม่</button>
+  <div class="grid2"><button class="pill-btn" style="height:48px;justify-content:center;border-style:dashed" data-act="openProject">${ic('plus', 18, 2)}โปรเจกต์ใหม่</button><button class="pill-btn ${ui.closeMode ? 'on' : ''}" style="height:48px;justify-content:center" data-act="closeMode">${ic('check', 18, 2)}${ui.closeMode ? 'เสร็จสิ้น' : 'ปิดโปรเจกต์'}</button></div>
   <div class="stack">${cards}</div>`;
 }
 function projectCard(p) {
@@ -120,11 +120,11 @@ function projectCard(p) {
   const cats = (p.categories || []).map((c) => allCats()[c]?.label).filter(Boolean).join(' · ');
   const done = ['done', 'archived'].includes(p.status);
   return `<div class="pcard ${tone}"><a class="in" href="#/project/${p.id}">
-    <div class="row" style="flex-wrap:wrap;padding-right:48px">${statusChip(p.status)}${priChip(p.priority)}</div>
+    <div class="row" style="flex-wrap:wrap${ui.closeMode ? ';padding-right:48px' : ''}">${statusChip(p.status)}${priChip(p.priority)}</div>
     <div class="title">${esc(p.name)}</div>
     <div class="row" style="gap:10px"><div class="bar"><i style="width:${Math.round(pr * 100)}%"></i></div><b style="font-size:12px">${Math.round(pr * 100)}%</b><span style="font-size:12px">${ts.filter((x) => x.done).length}/${ts.length}</span></div>
     <div class="between" style="font-size:12px;opacity:.85"><span>${esc(cats)}</span>${p.due ? `<span class="row" style="gap:4px">${ic('clock', 12, 2)}ส่ง ${fmtShort(p.due)}</span>` : ''}</div>
-  </a><button class="tick pc-done ${done ? 'on' : ''}" data-act="${done ? 'projReopen' : 'projDone'}" data-id="${p.id}" aria-label="${done ? 'ยกเลิกเสร็จ' : 'ทำเครื่องหมายว่าเสร็จ'}">${done ? ic('check', 16, 2.6) : ''}</button></div>`;
+  </a>${ui.closeMode ? `<button class="tick pc-done ${done ? 'on' : ''}" data-act="${done ? 'projReopen' : 'projDone'}" data-id="${p.id}" aria-label="${done ? 'ยกเลิกเสร็จ' : 'ทำเครื่องหมายว่าเสร็จ'}">${done ? ic('check', 16, 2.6) : ''}</button>` : ''}</div>`;
 }
 function viewProject(id) {
   const p = byId('projects', id);
@@ -420,6 +420,7 @@ const CHANGELOG = [
     'สถานที่: เพิ่มหมวดเองพร้อมไอคอน และเพิ่มวิธีไปเองพร้อมสี',
     'สถานที่: แยกขับรถกับเดิน และช่องกรอกเปลี่ยนตามวิธีไป',
     'สถานที่: บันทึกการไป แก้ไข-ลบได้ และสร้างโปรเจกต์ใหม่จากหน้านี้ได้',
+    'โปรเจกต์: ปุ่ม "ปิดโปรเจกต์" สำหรับเลือกปิดหลายโปรเจกต์จากหน้ารายการ',
     'เพิ่ม "มีอะไรใหม่" ในหน้าตั้งค่า',
     'เอาปุ่มใส่ข้อมูลตัวอย่างออกจากหน้าตั้งค่า',
   ] },

@@ -248,3 +248,4 @@ textarea.input { height: 80px; padding: 12px 16px; resize: none; }
 .mini .stat > span:last-child br { display: none; }
 .mini .stat .num { font-size: 15px; }
 .mini .stat .lb { font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+.pill-btn.on { background: var(--dark); color: var(--on-dark); border-color: var(--dark); }
