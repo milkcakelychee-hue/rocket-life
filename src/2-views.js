@@ -1,7 +1,7 @@
 /* =========================================================
    หน้าจอ (views) — แต่ละฟังก์ชันคืน HTML ของหน้านั้น
    ========================================================= */
-const ui = { projFilter: 'all', closeMode: false, priFilter: null, calMonth: null, calSel: null, recTab: 'place', recQuery: '', statPeriod: 'week', archiveYear: null };
+const ui = { projFilter: 'all', closeMode: false, sortMode: false, placeCat: null, priFilter: null, calMonth: null, calSel: null, recTab: 'place', recQuery: '', statPeriod: 'week', archiveYear: null };
 
 /* ---------- เมนูล่าง ---------- */
 function renderTabbar(active) {
@@ -130,11 +130,12 @@ function viewProject(id) {
   const p = byId('projects', id);
   if (!p) return `<div class="empty">ไม่พบโปรเจกต์นี้</div>`;
   const ts = tasksOf(id); const pr = progress(p); const t = today();
-  const tasks = ts.map((x) => `<div class="swipe"><div class="swipe-acts">
+  const tasks = ui.sortMode ? ts.map((x, i) => `<div class="todo ${x.done ? 'done' : ''}"><span class="tnum">${i + 1}</span><span class="grow t">${esc(x.title)}</span><button class="icon-btn sm" data-act="moveTask" data-id="${x.id}" data-n="-1" ${i ? '' : 'disabled'} aria-label="เลื่อนขึ้น"><span style="transform:rotate(-90deg);display:flex">${ic('right', 16, 2.2)}</span></button><button class="icon-btn sm" data-act="moveTask" data-id="${x.id}" data-n="1" ${i < ts.length - 1 ? '' : 'disabled'} aria-label="เลื่อนลง"><span style="transform:rotate(90deg);display:flex">${ic('right', 16, 2.2)}</span></button></div>`).join('') : ts.map((x, i) => `<div class="swipe"><div class="swipe-acts">
       ${!x.done && x.plannedFor !== t ? `<button class="sa" style="background:var(--purple);color:#1E1E20" data-act="planToday" data-id="${x.id}">${ic('sun', 18, 2)}<span>วันนี้</span></button>` : ''}
       <button class="sa" style="background:var(--dark);color:var(--on-dark)" data-act="editItem" data-kind="task" data-id="${x.id}">${ic('edit', 18, 2)}<span>แก้ไข</span></button>
       <button class="sa" style="background:var(--warn);color:#fff" data-act="delTask" data-id="${x.id}">${ic('trash', 18, 2)}<span>ลบ</span></button></div>
     <div class="todo swipe-row ${x.done ? 'done' : ''}">
+    <span class="tnum">${i + 1}</span>
     ${x.done ? `<button class="tick on" data-act="toggleItem" data-kind="task" data-id="${x.id}" aria-label="ยกเลิกเสร็จ">${ic('check', 16, 2.6)}</button>` : `<button class="tick" data-act="toggleItem" data-kind="task" data-id="${x.id}" aria-label="ทำเสร็จ"></button>`}
     <button class="grow" data-act="editItem" data-kind="task" data-id="${x.id}"><span class="t">${esc(x.title)}</span>
     ${x.plannedFor === t && !x.done ? `<span class="due-tag" style="color:var(--purple-ink)">${ic('sun', 12, 2.2)}อยู่ใน to-do วันนี้</span>` : ''}</button>
@@ -158,9 +159,9 @@ function viewProject(id) {
     <div style="padding:10px;border-radius:16px;background:var(--purple);color:#1E1E20"><div style="font-size:11px">กำหนดส่ง</div><b style="font-size:14px">${fmtShort(p.due) || '-'}</b></div>
     <div style="padding:10px;border-radius:16px;background:rgba(255,255,255,.1)"><div style="font-size:11px;color:var(--on-dark-2)">หมวด</div><b style="font-size:13px">${esc(cats)}</b></div></div>
   </section>
-  <div class="between"><h2 class="h2">งานย่อย <span style="color:var(--purple-ink)">${ts.filter((x) => x.done).length}/${ts.length}</span></h2></div>
-  <form class="search" data-form="addTask" data-id="${id}" style="border-radius:20px;padding-right:6px">${ic('plus', 18, 2)}<input name="title" placeholder="เพิ่มงานย่อย" aria-label="เพิ่มงานย่อย" autocomplete="off"><button class="pill-btn" style="background:var(--dark);color:var(--on-dark);border:none;height:40px">บันทึก</button></form>
-  ${ts.length ? '<div class="muted" style="font-size:12px;margin-top:-8px">ปัดงานย่อยไปทางซ้าย เพื่อใส่ to-do วันนี้ · แก้ไข · ลบ</div>' : ''}
+  <div class="between"><h2 class="h2">งานย่อย <span style="color:var(--purple-ink)">${ts.filter((x) => x.done).length}/${ts.length}</span></h2>${ts.length > 1 ? `<button class="pill-btn ${ui.sortMode ? 'on' : ''}" data-act="sortMode">${ui.sortMode ? 'เสร็จสิ้น' : 'จัดลำดับ'}</button>` : ''}</div>
+  ${ui.sortMode ? '' : `<form class="search" data-form="addTask" data-id="${id}" style="border-radius:20px;padding-right:6px">${ic('plus', 18, 2)}<input name="title" placeholder="เพิ่มงานย่อย" aria-label="เพิ่มงานย่อย" autocomplete="off"><button class="pill-btn" style="background:var(--dark);color:var(--on-dark);border:none;height:40px">บันทึก</button></form>`}
+  ${ts.length && !ui.sortMode ? '<div class="muted" style="font-size:12px;margin-top:-8px">ปัดงานย่อยไปทางซ้าย เพื่อใส่ to-do วันนี้ · แก้ไข · ลบ</div>' : ''}
   <div class="stack">${tasks || '<div class="empty">ยังไม่มีงานย่อย</div>'}</div>
   <h2 class="h2">ผูกไว้กับ</h2>
   <div class="grid3">${link('pin', 'สถานที่', linkedPlaces.length, linkedPlaces[0]?.name || '-', '#/records/place')}${link('person', 'คน', linkedPeople.length, linkedPeople[0]?.name || '-', '#/records/person')}${link('note', 'โน้ต', linkedNotes.length, linkedNotes[0]?.title || '-', '#/records/note')}</div>`;
@@ -267,7 +268,7 @@ function viewRecords(tab) {
   if (q) {
     rows.push(...db.projects.filter((p) => hit(p.name, p.desc)).map((p) => recRow('#/project/' + p.id, ic('folder', 18, 2), 'p2', p.name, 'โปรเจกต์ · ' + STATUS[p.status].label)));
   }
-  if (q || ui.recTab === 'place') rows.push(...db.places.filter((x) => hit(x.name, x.address, x.station, x.note)).map((x) => {
+  if (q || ui.recTab === 'place') rows.push(...db.places.filter((x) => hit(x.name, x.address, x.station, x.note) && (q || !ui.placeCat || x.cat === ui.placeCat)).map((x) => {
     const tr = trOf(x.transit); const last = (x.visits || []).map((v) => v.date).sort().pop();
     return recRow('#/place/' + x.id, { car: ic('car', 18, 2), walk: ic('walk', 18, 2) }[transitKind(x.transit)] || (tr.label.length > 4 ? ic('train', 18, 2) : esc(tr.label)), '', x.name, [x.cat, x.province, x.station && `${tr.label} ${x.station}`, last && `ไปล่าสุด ${fmtShort(last)}`].filter(Boolean).join(' · '), `background:${tr.color};color:#fff`);
   }));
@@ -281,13 +282,15 @@ function viewRecords(tab) {
   <label class="search">${ic('search')}<input id="recq" value="${esc(ui.recQuery)}" placeholder="ค้นหาทุกอย่าง: โปรเจกต์ สถานที่ คน โน้ต" aria-label="ค้นหารวม"></label>
   ${q ? '' : `<div class="statgrid" role="tablist">${tabs}</div>`}
   ${!q && ui.recTab === 'place' ? provinceMap() : ''}
+  ${!q && ui.recTab === 'place' ? placeCatChips() : ''}
   <div class="stack" id="rec-list">${rows.join('') || `<div class="empty">${q ? 'ไม่พบผลลัพธ์' : 'ยังไม่มีบันทึก กด + เพื่อเพิ่ม'}</div>`}</div>`;
 }
 /* แผนที่จังหวัดที่ไปมาแล้ว (นับจากสถานที่ที่ระบุจังหวัด) */
 function provinceMap() {
   const been = {}; db.places.forEach((x) => { if (x.province) been[x.province] = (been[x.province] || 0) + 1; });
+  been['กรุงเทพมหานคร'] ||= 0; // ที่ทำงาน ไฮไลต์ไว้เสมอ
   const n = Object.keys(been).length;
-  const paths = Object.entries(TH_MAP.p).map(([name, d]) => `<path d="${d}" class="${been[name] ? 'on' : ''}"><title>${name}${been[name] ? ' · ' + been[name] + ' แห่ง' : ''}</title></path>`).join('');
+  const paths = Object.entries(TH_MAP.p).map(([name, d]) => `<path d="${d}" class="${name in been ? 'on' : ''}"><title>${name}${been[name] ? ' · ' + been[name] + ' แห่ง' : ''}</title></path>`).join('');
   return `<section class="card thmap">
     <svg viewBox="0 0 ${TH_MAP.w} ${TH_MAP.h}" role="img" aria-label="แผนที่จังหวัดที่ไปมาแล้ว ${n} จังหวัด">${paths}</svg>
     <div class="stack" style="gap:10px;min-width:0">
@@ -295,6 +298,14 @@ function provinceMap() {
       <div class="bar" style="flex:none;color:var(--purple)"><i style="width:${Math.round((n / 77) * 100)}%"></i></div>
       ${n ? `<button class="link-btn" style="align-self:flex-start;padding:0;display:inline-flex;align-items:center;gap:4px;white-space:nowrap" data-act="provinceList">ดูรายชื่อจังหวัด ${ic('right', 14, 2)}</button>` : '<span class="muted" style="font-size:12px">เลือกจังหวัดตอนเพิ่มสถานที่ แผนที่จะไฮไลต์ให้</span>'}
     </div></section>`;
+}
+/* ป้ายหมวดสถานที่ กดเพื่อกรองรายการ */
+function placeCatChips() {
+  const n = {}; db.places.forEach((x) => { if (x.cat) n[x.cat] = (n[x.cat] || 0) + 1; });
+  if (!Object.keys(n).length) return '';
+  if (ui.placeCat && !n[ui.placeCat]) ui.placeCat = null;
+  const chip = (k, label, c, icon) => `<button class="cat-chip ${ui.placeCat === k ? 'on' : ''}" data-act="placeCat" data-k="${k ? esc(k) : ''}">${icon ? ic(icon, 14, 2) : ''}${esc(label)} <b>${c}</b></button>`;
+  return `<div class="cat-chips">${chip(null, 'ทั้งหมด', db.places.length)}${Object.entries(n).sort((a, b) => b[1] - a[1]).map(([k, c]) => chip(k, k, c, catIcon(k))).join('')}</div>`;
 }
 const recRow = (href, badge, cls, title, sub, style = '') =>
   `<a class="lrow" href="${href}"><span class="av ${cls}" style="${style}">${badge}</span><span class="grow"><span class="t">${esc(title)}</span><span class="muted" style="font-size:12px">${esc(sub)}</span></span>${ic('right', 16, 2)}</a>`;
@@ -420,6 +431,8 @@ const CHANGELOG = [
     'สถานที่: เพิ่มหมวดเองพร้อมไอคอน และเพิ่มวิธีไปเองพร้อมสี',
     'สถานที่: แยกขับรถกับเดิน และช่องกรอกเปลี่ยนตามวิธีไป',
     'สถานที่: บันทึกการไป แก้ไข-ลบได้ และสร้างโปรเจกต์ใหม่จากหน้านี้ได้',
+    'งานย่อยมีเลขลำดับ และกด "จัดลำดับ" เพื่อย้ายขึ้นลงได้',
+    'บันทึก: ป้ายหมวดสถานที่ กดดูเฉพาะหมวดได้ · กรุงเทพฯ ไฮไลต์บนแผนที่เสมอ',
     'โปรเจกต์: ปุ่ม "ปิดโปรเจกต์" สำหรับเลือกปิดหลายโปรเจกต์จากหน้ารายการ',
     'เพิ่ม "มีอะไรใหม่" ในหน้าตั้งค่า',
     'เอาปุ่มใส่ข้อมูลตัวอย่างออกจากหน้าตั้งค่า',

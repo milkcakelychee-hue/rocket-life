@@ -127,7 +127,7 @@ function sheetProject(id) {
   const stTone = { todo: 'var(--card-2)', doing: 'var(--purple)', waiting: 'var(--amber-soft)', revise: 'var(--warn-soft)' };
   const prTone = { 1: 'var(--warn-soft)', 2: 'var(--purple-soft)', 3: 'var(--amber-soft)', 4: 'var(--card-2)' };
   openSheet(p ? 'แก้ไขโปรเจกต์' : 'โปรเจกต์ใหม่', `<form class="stack" style="gap:14px" data-form="project" data-id="${id || ''}">
-    ${fieldH('ชื่อโปรเจกต์', inputH('name', p?.name || '', 'text', 'เช่น อินโฟพื้นที่น้ำท่วมรายภาค'))}
+    ${fieldH('ชื่อโปรเจกต์', inputH('name', p?.name || '', 'text'))}
     ${fieldH('คำอธิบาย (ถ้ามี)', areaH('desc', p?.desc || ''))}
     <div class="field"><span class="label">สถานะ</span>${optTiles('status', ['todo', 'doing', 'waiting', 'revise'].map((k) => [k, STATUS[k].label, STATUS[k].icon, stTone[k]]), ['done', 'archived'].includes(p?.status) ? '' : (p?.status || 'todo'))}</div>
     <div class="field"><span class="label">ความสำคัญ</span>${optTiles('priority', Object.entries(PRIORITY).map(([k, v]) => [k, v.label, v.icon, prTone[k]]), p?.priority || 2)}</div>
@@ -350,6 +350,13 @@ const ACT = {
   goCalendar: (el) => { ui.calSel = el.dataset.k; ui.calMonth = el.dataset.k.slice(0, 7); location.hash = '#/calendar'; },
   calSel: (el) => { ui.calSel = el.dataset.k; render(); },
   calMove: (el) => { const [y, m] = ui.calMonth.split('-').map(Number); const d = new Date(y, m - 1 + Number(el.dataset.n), 1); ui.calMonth = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; render(); },
+  placeCat: (el) => { ui.placeCat = el.dataset.k || null; render(); },
+  sortMode: () => { ui.sortMode = !ui.sortMode; render(); },
+  moveTask: (el) => {
+    const x = byId('tasks', el.dataset.id); const ts = tasksOf(x.projectId); const i = ts.indexOf(x); const j = i + Number(el.dataset.n);
+    if (j < 0 || j >= ts.length) return;
+    [ts[i], ts[j]] = [ts[j], ts[i]]; ts.forEach((t, k) => { t.order = k; }); save(); render();
+  },
   recTab: (el) => { location.hash = '#/records/' + el.dataset.k; },
   statPeriod: (el) => { ui.statPeriod = el.dataset.k; render(); },
   statDetail: (el) => sheetStatDetail(el.dataset.k),

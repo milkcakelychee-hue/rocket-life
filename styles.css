@@ -249,3 +249,13 @@ textarea.input { height: 80px; padding: 12px 16px; resize: none; }
 .mini .stat .num { font-size: 15px; }
 .mini .stat .lb { font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
 .pill-btn.on { background: var(--dark); color: var(--on-dark); border-color: var(--dark); }
+/* ----- place category chips / subtask order ----- */
+.cat-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: -4px 0; padding: 2px 0; }
+.cat-chips::-webkit-scrollbar { display: none; }
+.cat-chip { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--card); color: var(--ink); font-size: 13px; }
+.cat-chip b { font-weight: 700; color: var(--purple-ink); }
+.cat-chip.on { background: var(--dark); color: var(--on-dark); border-color: var(--dark); }
+.cat-chip.on b { color: var(--purple); }
+.tnum { flex: none; width: 22px; text-align: center; font-size: 13px; font-weight: 700; color: var(--purple-ink); }
+.icon-btn.sm { width: 36px; height: 36px; }
+.icon-btn:disabled { opacity: .3; }
