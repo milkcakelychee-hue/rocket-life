@@ -80,7 +80,7 @@ function todoRow({ kind, ref }) {
   const due = !ref.done && (dueSoon(ref.due) || (proj && dueSoon(proj.due)));
   const tick = ref.done ? `<button class="tick on" data-act="toggleItem" data-kind="${kind}" data-id="${ref.id}" aria-label="ยกเลิกเสร็จ">${ic('check', 16, 2.6)}</button>`
     : `<button class="tick" data-act="toggleItem" data-kind="${kind}" data-id="${ref.id}" aria-label="ทำเสร็จ"></button>`;
-  return `<div class="todo ${ref.done ? 'done' : ''} ${due ? 'due' : ''}" data-id="${ref.id}">
+  return `<div class="todo ${ref.done ? 'done' : ''} ${due ? 'due' : ''} ${kind === 'task' && !ref.done && WAIT[ref.wait] ? 'waiting' : ''}" data-id="${ref.id}">
     ${tick}
     <button class="grow" data-act="editItem" data-kind="${kind}" data-id="${ref.id}">
       <span class="t">${esc(ref.title)}</span>

@@ -259,3 +259,6 @@ textarea.input { height: 80px; padding: 12px 16px; resize: none; }
 .tnum { flex: none; width: 22px; text-align: center; font-size: 13px; font-weight: 700; color: var(--purple-ink); }
 .icon-btn.sm { width: 36px; height: 36px; }
 .icon-btn:disabled { opacity: .3; }
+.todo.waiting { background: var(--card-2); }
+.todo.waiting .t { color: var(--ink-2); }
+.todo.waiting .chip.p4 { background: var(--card); }

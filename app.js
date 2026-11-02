@@ -164,7 +164,7 @@ const flower = (color, size = 12, center = null) =>
 /* ---------- ค่าคงที่ตามดีไซน์ ---------- */
 const STATUS_COLOR = { todo: '#71717A', doing: '#7C4DCC', waiting: '#E08A1E', revise: '#D9533B', done: '#2E9E4F', archived: '#71717A' };
 // สถานะงานย่อยระหว่างทำ (ยังไม่เสร็จ)
-const WAIT = { review: { label: 'รอตรวจสอบ', icon: 'eye', cls: 'p2' }, info: { label: 'รอข้อมูล', icon: 'clock', cls: 'p3' } };
+const WAIT = { review: { label: 'รอตรวจสอบ', icon: 'eye', cls: 'p4' }, info: { label: 'รอข้อมูล', icon: 'clock', cls: 'p4' } };
 const STATUS = {
   todo: { label: 'ต้องทำ', icon: 'circle', tone: 'p4' },
   doing: { label: 'กำลังทำ', icon: 'hourglass', tone: 'p2' },
@@ -420,7 +420,7 @@ function todoRow({ kind, ref }) {
   const due = !ref.done && (dueSoon(ref.due) || (proj && dueSoon(proj.due)));
   const tick = ref.done ? `<button class="tick on" data-act="toggleItem" data-kind="${kind}" data-id="${ref.id}" aria-label="ยกเลิกเสร็จ">${ic('check', 16, 2.6)}</button>`
     : `<button class="tick" data-act="toggleItem" data-kind="${kind}" data-id="${ref.id}" aria-label="ทำเสร็จ"></button>`;
-  return `<div class="todo ${ref.done ? 'done' : ''} ${due ? 'due' : ''}" data-id="${ref.id}">
+  return `<div class="todo ${ref.done ? 'done' : ''} ${due ? 'due' : ''} ${kind === 'task' && !ref.done && WAIT[ref.wait] ? 'waiting' : ''}" data-id="${ref.id}">
     ${tick}
     <button class="grow" data-act="editItem" data-kind="${kind}" data-id="${ref.id}">
       <span class="t">${esc(ref.title)}</span>
@@ -1103,11 +1103,12 @@ const ACT = {
     const x = byId('tasks', el.dataset.id); if (!x) return;
     const opt = (k, icon, label, cls, on) => `<button class="lrow" data-act="setWait" data-id="${x.id}" data-k="${k}" style="background:${on ? 'var(--purple-soft)' : 'var(--bg)'}"><span class="av ${cls}">${ic(icon, 18, 2)}</span><span class="grow t">${label}</span>${on ? ic('check', 18, 2.4) : ''}</button>`;
     openSheet('สถานะงานนี้', `<div class="muted" style="margin-top:-10px">${esc(x.title)}</div><div class="stack">
-      ${opt('', 'edit', 'กำลังทำ', 'p4', !x.wait)}${Object.entries(WAIT).map(([k, w]) => opt(k, w.icon, w.label, w.cls, x.wait === k)).join('')}${opt('done', 'check', 'เสร็จแล้ว', 'p4', false)}</div>`);
+      ${Object.entries(WAIT).map(([k, w]) => opt(x.wait === k ? '' : k, w.icon, w.label, w.cls, x.wait === k)).join('')}</div>
+      <div class="muted" style="font-size:12px">แตะสถานะที่เลือกอยู่อีกครั้งเพื่อยกเลิก · งานเสร็จให้ติ๊กที่วงกลม</div>`);
   },
   setWait: (el) => {
     const x = byId('tasks', el.dataset.id); const k = el.dataset.k;
-    if (k === 'done') { x.done = true; x.doneAt = today(); x.wait = null; } else x.wait = k || null;
+    x.wait = k || null;
     save(); closeSheet(); render();
   },
   planToday: (el) => { const x = byId('tasks', el.dataset.id); x.plannedFor = today(); x.movedFrom = null; save(); render(); toast('ใส่ใน to-do วันนี้แล้ว'); },

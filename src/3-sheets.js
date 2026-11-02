@@ -290,11 +290,12 @@ const ACT = {
     const x = byId('tasks', el.dataset.id); if (!x) return;
     const opt = (k, icon, label, cls, on) => `<button class="lrow" data-act="setWait" data-id="${x.id}" data-k="${k}" style="background:${on ? 'var(--purple-soft)' : 'var(--bg)'}"><span class="av ${cls}">${ic(icon, 18, 2)}</span><span class="grow t">${label}</span>${on ? ic('check', 18, 2.4) : ''}</button>`;
     openSheet('สถานะงานนี้', `<div class="muted" style="margin-top:-10px">${esc(x.title)}</div><div class="stack">
-      ${opt('', 'edit', 'กำลังทำ', 'p4', !x.wait)}${Object.entries(WAIT).map(([k, w]) => opt(k, w.icon, w.label, w.cls, x.wait === k)).join('')}${opt('done', 'check', 'เสร็จแล้ว', 'p4', false)}</div>`);
+      ${Object.entries(WAIT).map(([k, w]) => opt(x.wait === k ? '' : k, w.icon, w.label, w.cls, x.wait === k)).join('')}</div>
+      <div class="muted" style="font-size:12px">แตะสถานะที่เลือกอยู่อีกครั้งเพื่อยกเลิก · งานเสร็จให้ติ๊กที่วงกลม</div>`);
   },
   setWait: (el) => {
     const x = byId('tasks', el.dataset.id); const k = el.dataset.k;
-    if (k === 'done') { x.done = true; x.doneAt = today(); x.wait = null; } else x.wait = k || null;
+    x.wait = k || null;
     save(); closeSheet(); render();
   },
   planToday: (el) => { const x = byId('tasks', el.dataset.id); x.plannedFor = today(); x.movedFrom = null; save(); render(); toast('ใส่ใน to-do วันนี้แล้ว'); },
