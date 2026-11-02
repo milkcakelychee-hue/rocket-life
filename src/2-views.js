@@ -213,7 +213,7 @@ function viewCalendar() {
   const offset = (first.getDay() + 6) % 7;
   const ranges = [
     ...db.projects.filter((p) => p.due && p.status !== 'archived').map((p) => ({ s: p.due, e: p.due, kind: 'due', title: p.name, sub: 'กำหนดส่ง', href: '#/project/' + p.id })),
-    ...db.appts.map((a) => ({ s: a.start, e: a.end || a.start, kind: 'event', title: a.title, sub: (a.time ? a.time + ' · ' : '') + (a.end && a.end !== a.start ? `${fmtShort(a.start)} – ${fmtShort(a.end)}` : 'นัดหมาย'), id: a.id })),
+    ...db.appts.map((a) => ({ s: a.start, e: a.end || a.start, kind: 'event', title: a.title, sub: (a.time ? a.time + ' · ' : '') + (a.end && a.end !== a.start ? `${fmtShort(a.start)} – ${fmtShort(a.end)}` : 'นัดหมาย') + (byId('places', a.placeId) ? ' · ' + byId('places', a.placeId).name : ''), id: a.id })),
   ];
   const cells = [];
   const total = Math.ceil((offset + daysIn) / 7) * 7;
@@ -326,7 +326,7 @@ function viewPlace(id) {
   <section class="card dark hero">
     <b style="font-size:13px;color:var(--purple)">วิธีไป</b>
     ${['car', 'walk'].includes(transitKind(x.transit)) ? `<div class="row" style="gap:14px"><span class="av" style="width:56px;height:56px;border-radius:18px;background:${tr.color};color:#fff">${ic(transitKind(x.transit), 28)}</span>
-      <div><div style="font-size:13px;font-weight:600">${tr.label}</div><div style="font-size:24px;font-weight:700;line-height:1.35">${(x.transit === 'walk' ? x.walk : x.driveMin) ? '~' + esc(x.transit === 'walk' ? x.walk : x.driveMin) + ' นาที' : esc(x.province || '-')}</div></div></div>
+      <div><div style="font-size:13px;font-weight:600">${tr.label}</div><div style="font-size:24px;font-weight:700;line-height:1.35">${x.transit === 'walk' ? (x.walk ? '~' + esc(x.walk) + ' นาที' : esc(x.province || '-')) : x.driveMin ? '~' + (x.driveMin >= 60 ? Math.floor(x.driveMin / 60) + ' ชม. ' : '') + (x.driveMin % 60 ? (x.driveMin % 60) + ' นาที' : '') : esc(x.province || '-')}</div></div></div>
     ${x.parking ? `<div style="padding:14px;border-radius:20px;background:var(--purple);color:#1E1E20"><div style="font-size:12px">ที่จอดรถ</div><div style="font-size:20px;font-weight:700;line-height:1.4">${esc(x.parking)}</div></div>` : ''}` : `    <div class="row" style="gap:14px"><span class="av" style="width:56px;height:56px;border-radius:18px;background:${tr.color};color:#fff">${ic('train', 28)}</span>
       <div><div style="font-size:13px;font-weight:600">${tr.label}${x.line ? ' ' + esc(x.line) : ''}</div><div style="font-size:24px;font-weight:700;line-height:1.35">${esc(x.station || '-')}</div></div></div>
     <div class="grid2"><div style="padding:14px;border-radius:20px;background:var(--purple);color:#1E1E20"><div style="font-size:12px">ทางออก</div><div style="font-size:34px;font-weight:700;line-height:1.2">${esc(x.exit || '-')}</div></div>
@@ -338,7 +338,7 @@ function viewPlace(id) {
   ${x.note ? `<div class="card"><div class="label">โน้ต</div><div style="font-size:14px">${esc(x.note)}</div></div>` : ''}
   <section class="card stack" style="gap:10px">
     <div class="between"><div><b>บันทึกการไป</b><div class="muted" style="font-size:12px">ไปวันไหน · ไปเพื่อโปรเจกต์อะไร</div></div><button class="pill-btn" data-act="addVisit" data-id="${id}">${ic('plus', 16, 2)}เพิ่ม</button></div>
-    ${visits.map((v) => `<button class="lrow" style="padding:10px 4px;border-radius:0;border-top:1px solid var(--line);background:transparent" ${v.id ? `data-act="editVisit" data-place="${id}" data-id="${v.id}"` : ''}><span class="grow"><span class="t" style="font-weight:500">${esc(byId('projects', v.projectId)?.name || 'ไม่ผูกโปรเจกต์')}</span><span class="muted" style="font-size:12px">${fmtFull(v.date)}${v.note ? ' · ' + esc(v.note) : ''}</span></span>${ic('edit', 16, 2)}</button>`).join('') || '<div class="muted">ยังไม่มีบันทึก กด "เพิ่ม" เมื่อไปที่นี่</div>'}
+    ${visits.map((v) => `<button class="lrow" style="padding:10px 4px;border-radius:0;border-top:1px solid var(--line);background:transparent" ${v.id ? `data-act="editVisit" data-place="${id}" data-id="${v.id}"` : ''}><span class="grow"><span class="t" style="font-weight:500">${esc(byId('projects', v.projectId)?.name || 'ไม่ผูกโปรเจกต์')}</span><span class="muted" style="font-size:12px">${fmtFull(v.date)}${byId('appts', v.apptId) ? ' · นัด ' + esc(byId('appts', v.apptId).title) : ''}${v.note ? ' · ' + esc(v.note) : ''}</span></span>${ic('edit', 16, 2)}</button>`).join('') || '<div class="muted">ยังไม่มีบันทึก กด "เพิ่ม" เมื่อไปที่นี่</div>'}
   </section>`;
 }
 
@@ -419,6 +419,8 @@ function viewStats() {
 /* มีอะไรใหม่ — ใส่เฉพาะฟีเจอร์/การเปลี่ยนแปลงใหญ่ (ไม่ต้องใส่การแก้คำ/ขนาด/สี) ใหม่สุดอยู่บน */
 const CHANGELOG = [
   { ver: 'เวอร์ชัน 1.1', date: '30 ต.ค. 2569', items: [
+    'สถานที่: ขับรถใส่เป็นชั่วโมง + นาที · การไปผูกได้ทั้งโปรเจกต์และนัดหมาย',
+    'นัดหมาย: ใส่สถานที่ได้ ถึงวันนัดจะบันทึกลงหน้าสถานที่ให้เอง',
     'แอปบน iPhone อัปเดตเป็นเวอร์ชันล่าสุดเองเมื่อเปิดแอป',
     'หน้าเช็กอิน: ช่องข้อมูลการลาแสดงเฉพาะเมื่อเลือก "ลา"',
     'หน้าเช็กอิน: ป้ายเวลาแบบนาฬิกาพลิก พร้อมวันที่',

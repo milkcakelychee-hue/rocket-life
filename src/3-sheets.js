@@ -81,10 +81,9 @@ function sheetPick() {
     ${ts.map((x) => `<button type="button" class="opt" data-pick="${x.id}" style="font-size:15px;padding:10px 14px" aria-pressed="false"><span class="tick" style="width:26px;height:26px"></span>${esc(x.title)}</button>`).join('')}</div>`).join('')
     : '<div class="empty">ไม่มีงานย่อยค้างให้เลือก · สร้างโปรเจกต์และงานย่อยก่อน หรือเพิ่ม to-do ลอย</div>';
   openSheet(`ใส่งานใน "วันนี้"`, `<div class="muted" style="margin-top:-10px">${fmtDay(t)}</div>
-    <label class="search" style="height:46px;background:var(--bg)">${ic('search', 18)}<input id="pick-q" placeholder="ค้นหางานย่อย" aria-label="ค้นหางานย่อย"></label>
+    <button class="btn ghost" data-act="openTodo" style="border:1.5px dashed var(--line-2)">${ic('plus', 18, 2)} เพิ่ม to-do ลอย (ไม่ผูกโปรเจกต์)</button>
     <div class="stack" style="gap:14px" id="pick-list">${body}</div>
-    <button class="btn" data-act="pickConfirm" id="pick-btn" disabled>เลือกงานที่จะทำวันนี้</button>
-    <button class="link-btn" data-act="openTodo">+ เพิ่ม to-do ลอย (ไม่ผูกโปรเจกต์)</button>`, (sh) => {
+    <button class="btn" data-act="pickConfirm" id="pick-btn" disabled>เลือกงานที่จะทำวันนี้</button>`, (sh) => {
     const sel = new Set();
     sh.addEventListener('click', (e) => {
       const b = e.target.closest('[data-pick]'); if (!b) return;
@@ -93,7 +92,6 @@ function sheetPick() {
       $('.tick', b).classList.toggle('on', on); $('.tick', b).innerHTML = on ? ic('check', 14, 2.6) : '';
       const btn = $('#pick-btn', sh); btn.disabled = !sel.size; btn.textContent = sel.size ? `ใส่ ${sel.size} งานในวันนี้` : 'เลือกงานที่จะทำวันนี้';
     });
-    $('#pick-q', sh).addEventListener('input', (e) => { const q = e.target.value.toLowerCase(); $$('[data-pick]', sh).forEach((b) => { b.hidden = q && !b.textContent.toLowerCase().includes(q); }); });
     sh._sel = sel;
   });
 }
@@ -155,6 +153,8 @@ function sheetAppt(id, k) {
     ${fieldH('ชื่อนัด / งาน', inputH('title', a?.title || '', 'text', 'เช่น ลงพื้นที่ · คุยทีมกราฟิก'))}
     <div class="grid2">${fieldH('วันเริ่ม', inputH('start', a?.start || k || today(), 'date'))}${fieldH('ถึงวันที่ (ถ้าหลายวัน)', inputH('end', a?.end || '', 'date'))}</div>
     ${fieldH('เวลา (ถ้ามี)', inputH('time', a?.time || '', 'time'))}
+    ${fieldH('สถานที่ (ถ้ามี)', `<input class="input" name="place" list="appt-places" value="${esc(byId('places', a?.placeId)?.name || '')}" placeholder="พิมพ์ชื่อ หรือเลือกจากที่บันทึกไว้" autocomplete="off"><datalist id="appt-places">${db.places.map((x) => `<option value="${esc(x.name)}">`).join('')}</datalist>`)}
+    <div class="muted" style="font-size:12px;margin-top:-8px">ถึงวันนัด สถานที่นี้จะบันทึกไว้ในหน้าบันทึกให้เอง</div>
     ${fieldH('โน้ต', areaH('note', a?.note || ''))}
     <button class="btn">บันทึก</button>${a ? `<button type="button" class="btn ghost" style="color:var(--warn-ink)" data-act="delAppt" data-id="${a.id}">ลบนัดนี้</button>` : ''}</form>`);
 }
@@ -193,7 +193,8 @@ function sheetPlace(id) {
     <div class="grid2" ${show('rail')}>${fieldH('สาย', inputH('line', x.line || '', 'text', 'สุขุมวิท'))}${fieldH('สถานี', inputH('station', x.station || ''))}</div>
     <div class="grid2" ${show('bus')}>${fieldH('สาย / เส้นทาง', inputH('busLine', transitKind(tr) === 'bus' ? x.line || '' : '', 'text', 'เช่น 8, 29'))}${fieldH('ป้าย / จุดที่ลง', inputH('busStop', transitKind(tr) === 'bus' ? x.station || '' : ''))}</div>
     <div class="grid2" ${show('rail')}>${fieldH('ทางออก', inputH('exit', x.exit || ''))}${fieldH('เดินต่อ (นาที)', inputH('walk', x.walk || '', 'number'))}</div>
-    <div class="grid2" ${show('car')}>${fieldH('ที่จอดรถ', inputH('parking', x.parking || ''))}${fieldH('ขับรถ (นาที)', inputH('driveMin', x.driveMin || '', 'number'))}</div>
+    <div class="grid2" ${show('car')}>${fieldH('ที่จอดรถ', inputH('parking', x.parking || ''))}</div>
+    <div class="field" ${show('car')}><span class="label">ขับรถใช้เวลา</span><div class="grid2"><label class="row" style="gap:8px">${inputH('driveH', x.driveMin ? Math.floor(x.driveMin / 60) || '' : '', 'number', '0')}<span>ชม.</span></label><label class="row" style="gap:8px">${inputH('driveM', x.driveMin ? x.driveMin % 60 || '' : '', 'number', '0')}<span>นาที</span></label></div></div>
     <div ${show('walk')}>${fieldH('เดิน (นาที)', inputH('walkMin', x.transit === 'walk' ? x.walk || '' : '', 'number'))}</div>
     ${fieldH('วิธีไปต่อ (บรรทัดละขั้น)', areaH('steps', x.steps || '', 'เช่น ลงทางออก 3 แล้วเดินตรง'))}
     <div class="grid2">${fieldH('แลกบัตร', inputH('card', x.card || ''))}${fieldH('ลิฟต์ / ชั้น', inputH('lift', x.lift || ''))}</div>
@@ -217,6 +218,7 @@ function sheetVisit(placeId, vid) {
     <div class="field"><span class="label">ไปเพื่อโปรเจกต์</span>${projectSelect('projectId', v?.projectId ?? (v ? '' : db.projects.find((p) => p.status === 'doing')?.id || ''))}
       <button type="button" class="pill-btn" style="align-self:flex-start;background:var(--purple);color:#1E1E20;border:none;font-weight:600" data-act="visitNewProject">${ic('plus', 16, 2)}สร้างโปรเจกต์ใหม่</button>
       <div id="newproj-box" hidden>${inputH('newProject', '', 'text', 'ชื่อโปรเจกต์ใหม่')}</div></div>
+    ${fieldH('ผูกนัดหมาย (ถ้ามี)', `<select class="input" name="apptId"><option value="">— ไม่ผูกนัดหมาย —</option>${db.appts.slice().sort((a, b) => b.start.localeCompare(a.start)).map((a) => `<option value="${a.id}" ${a.id === v?.apptId ? 'selected' : ''}>${esc(a.title)} · ${fmtShort(a.start)}</option>`).join('')}</select>`)}
     ${fieldH('ไปทำอะไร (ถ้ามี)', inputH('note', v?.note || '', 'text', 'เช่น ประชุม, ถ่ายภาพ'))}
     <button class="btn">บันทึก</button>${v ? `<button type="button" class="btn ghost" style="color:var(--warn-ink)" data-act="delVisit" data-place="${placeId}" data-id="${vid}">ลบรายการนี้</button>` : ''}</form>`);
 }
@@ -412,10 +414,19 @@ const FORM = {
   appt: (f, v) => {
     const id = f.dataset.id; const data = { title: v.title.trim(), start: v.start, end: v.end && v.end > v.start ? v.end : null, time: v.time, note: v.note };
     if (!data.title) return false;
-    if (id) Object.assign(byId('appts', id), data); else db.appts.push({ id: uid(), ...data });
+    const pn = (v.place || '').trim();
+    let pl = pn ? db.places.find((x) => x.name.trim() === pn) : null;
+    if (pn && !pl) { pl = { id: uid(), name: pn, visits: [] }; db.places.push(pl); }
+    data.placeId = pl?.id || null;
+    const a = id ? byId('appts', id) : { id: uid() };
+    // เปลี่ยนสถานที่หรือวัน: ลบการไปที่บันทึกไว้เดิม แล้วบันทึกใหม่
+    if (a.visitId && (a.placeId !== data.placeId || a.start !== data.start)) { const op = byId('places', a.placeId); if (op) op.visits = (op.visits || []).filter((x) => x.id !== a.visitId); a.visitId = null; }
+    Object.assign(a, data); if (!id) db.appts.push(a);
+    if (a.placeId && !a.visitId && a.start <= today()) logApptVisit(a);
   },
   place: (f, v) => {
     const id = f.dataset.id; if (!v.name.trim()) return false;
+    v.driveMin = (Number(v.driveH) || 0) * 60 + (Number(v.driveM) || 0) || ''; delete v.driveH; delete v.driveM;
     const kind = transitKind(v.transit);
     if (kind === 'bus') { v.line = v.busLine; v.station = v.busStop; }
     if (kind === 'walk') v.walk = v.walkMin;
@@ -428,7 +439,11 @@ const FORM = {
     if (v.newProject?.trim()) { const p = { id: uid(), name: v.newProject.trim(), status: 'doing', priority: 2, start: today(), categories: [], createdAt: today() }; db.projects.push(p); v.projectId = p.id; }
     delete v.newProject;
     x.visits = (x.visits || []).map((y) => (y.id ? y : { ...y, id: uid() }));
-    if (f.dataset.id) Object.assign(x.visits.find((y) => y.id === f.dataset.id), v); else x.visits.push({ id: uid(), ...v });
+    let vis = f.dataset.id && x.visits.find((y) => y.id === f.dataset.id);
+    if (vis) Object.assign(vis, v); else { vis = { id: uid(), ...v }; x.visits.push(vis); }
+    // ผูกนัดหมาย: นัดนั้นชี้กลับมาที่สถานที่และการไปนี้
+    db.appts.forEach((a) => { if (a.visitId === vis.id && a.id !== vis.apptId) a.visitId = null; });
+    const ap = byId('appts', vis.apptId); if (ap) { ap.placeId = x.id; ap.visitId = vis.id; }
     toast('บันทึกแล้ว');
   },
   person: (f, v) => {
