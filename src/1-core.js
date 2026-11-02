@@ -82,6 +82,8 @@ const flower = (color, size = 12, center = null) =>
 
 /* ---------- ค่าคงที่ตามดีไซน์ ---------- */
 const STATUS_COLOR = { todo: '#71717A', doing: '#7C4DCC', waiting: '#E08A1E', revise: '#D9533B', done: '#2E9E4F', archived: '#71717A' };
+// สถานะงานย่อยระหว่างทำ (ยังไม่เสร็จ)
+const WAIT = { review: { label: 'รอตรวจสอบ', icon: 'eye', cls: 'p2' }, info: { label: 'รอข้อมูล', icon: 'clock', cls: 'p3' } };
 const STATUS = {
   todo: { label: 'ต้องทำ', icon: 'circle', tone: 'p4' },
   doing: { label: 'กำลังทำ', icon: 'hourglass', tone: 'p2' },

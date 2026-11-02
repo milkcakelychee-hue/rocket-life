@@ -84,9 +84,10 @@ function todoRow({ kind, ref }) {
     ${tick}
     <button class="grow" data-act="editItem" data-kind="${kind}" data-id="${ref.id}">
       <span class="t">${esc(ref.title)}</span>
-      <span class="meta">${priChip(pri)}<span class="muted" style="font-size:12px">${proj ? esc(proj.name) : 'to-do ลอย'}${ref.movedFrom ? ' · เลื่อนมาจาก ' + fmtShort(ref.movedFrom) : ''}</span>
+      <span class="meta">${kind === 'task' && !ref.done && WAIT[ref.wait] ? `<span class="chip ${WAIT[ref.wait].cls}">${ic(WAIT[ref.wait].icon, 12, 2.2)}${WAIT[ref.wait].label}</span>` : ''}${priChip(pri)}<span class="muted" style="font-size:12px">${proj ? esc(proj.name) : 'to-do ลอย'}${ref.movedFrom ? ' · เลื่อนมาจาก ' + fmtShort(ref.movedFrom) : ''}</span>
       ${due ? `<span class="due-tag">${ic('warn', 12, 2.2)}ใกล้กำหนดส่ง</span>` : ''}</span>
     </button>
+    ${kind === 'task' && !ref.done ? `<button class="icon-btn sm" data-act="taskWait" data-id="${ref.id}" aria-label="เปลี่ยนสถานะ">${ic('more', 18, 3)}</button>` : ''}
     <button class="grip" aria-label="ลากเพื่อจัดลำดับ" data-grip>${ic('grip', 18, 3)}</button>
   </div>`;
 }
@@ -138,6 +139,7 @@ function viewProject(id) {
     <span class="tnum">${i + 1}</span>
     ${x.done ? `<button class="tick on" data-act="toggleItem" data-kind="task" data-id="${x.id}" aria-label="ยกเลิกเสร็จ">${ic('check', 16, 2.6)}</button>` : `<button class="tick" data-act="toggleItem" data-kind="task" data-id="${x.id}" aria-label="ทำเสร็จ"></button>`}
     <button class="grow" data-act="editItem" data-kind="task" data-id="${x.id}"><span class="t">${esc(x.title)}</span>
+    ${!x.done && WAIT[x.wait] ? `<span class="chip ${WAIT[x.wait].cls}" style="align-self:flex-start">${ic(WAIT[x.wait].icon, 12, 2.2)}${WAIT[x.wait].label}</span>` : ''}
     ${x.plannedFor === t && !x.done ? `<span class="due-tag" style="color:var(--purple-ink)">${ic('sun', 12, 2.2)}อยู่ใน to-do วันนี้</span>` : ''}</button>
     <span class="muted" style="padding-right:8px;opacity:.6" aria-hidden="true">${ic('left', 16, 2)}</span>
   </div></div>`).join('');
@@ -419,6 +421,7 @@ function viewStats() {
 /* มีอะไรใหม่ — ใส่เฉพาะฟีเจอร์/การเปลี่ยนแปลงใหญ่ (ไม่ต้องใส่การแก้คำ/ขนาด/สี) ใหม่สุดอยู่บน */
 const CHANGELOG = [
   { ver: 'เวอร์ชัน 1.1', date: '30 ต.ค. 2569', items: [
+    'to-do วันนี้: งานย่อยตั้งสถานะ "รอตรวจสอบ" · "รอข้อมูล" ได้',
     'สถานที่: ขับรถใส่เป็นชั่วโมง + นาที · การไปผูกได้ทั้งโปรเจกต์และนัดหมาย',
     'นัดหมาย: ใส่สถานที่ได้ ถึงวันนัดจะบันทึกลงหน้าสถานที่ให้เอง',
     'แอปบน iPhone อัปเดตเป็นเวอร์ชันล่าสุดเองเมื่อเปิดแอป',
