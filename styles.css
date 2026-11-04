@@ -120,7 +120,7 @@ svg { display: block; flex: none; }
 .tick.on { background: var(--dark); border-color: var(--dark); }
 .tick.moved { background: var(--purple-soft); border-color: var(--purple-soft); color: var(--purple-ink); }
 .grip { width: 32px; height: 44px; flex: none; border: none; background: transparent; color: var(--ink-3); display: flex; align-items: center; justify-content: center; padding: 0; touch-action: none; cursor: grab; }
-.todo.dragging { box-shadow: 0 14px 30px rgba(30,30,32,.18); outline: 2px solid var(--purple); transform: scale(1.02); position: relative; z-index: 5; }
+.swipe.dragging, .todo.dragging { box-shadow: 0 14px 30px rgba(30,30,32,.18); outline: 2px solid var(--purple); transform: scale(1.02); position: relative; z-index: 5; }
 .due-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--warn-ink); }
 
 /* ----- project cards ----- */
@@ -262,3 +262,14 @@ textarea.input { height: 80px; padding: 12px 16px; resize: none; }
 .todo.waiting { background: var(--card-2); }
 .todo.waiting .t { color: var(--ink-2); }
 .todo.waiting .chip.p4 { background: var(--card); }
+/* ----- project timeline ----- */
+.tl { position: relative; height: 22px; margin: 14px 10px 10px; }
+.tl::before { content: ''; position: absolute; left: 0; right: 0; top: 9px; height: 4px; border-radius: 4px; background: rgba(255,255,255,.2); }
+.tl i { position: absolute; left: 0; top: 9px; height: 4px; border-radius: 4px; background: var(--purple); }
+.tl-s, .tl-now, .tl-e { position: absolute; top: 11px; transform: translate(-50%, -50%); border-radius: 50%; }
+.tl-s { left: 0; width: 14px; height: 14px; background: #fff; }
+.tl-now { width: 16px; height: 16px; background: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.3); }
+.tl-e { left: 100%; width: 20px; height: 20px; border: 3px solid var(--purple); background: var(--dark); }
+/* ซ่อนปุ่มหลังแถวจนกว่าจะปัด กันสีแดงโผล่ตามขอบมน */
+.swipe-acts { opacity: 0; }
+.swipe:has(.swipe-row[style*="translate"]) .swipe-acts { opacity: 1; }

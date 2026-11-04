@@ -57,6 +57,11 @@ function viewToday() {
     </div>`;
   }
 
+  const arrive = db.appts.filter((a) => a.placeId && !a.visitId && a.start <= t && (a.end || a.start) >= t && byId('places', a.placeId)).map((a) => `<div class="card row" style="gap:12px;border:1px solid var(--purple)">
+    <span class="av p2" style="width:40px;height:40px">${ic('pin', 20, 2)}</span>
+    <span class="grow" style="min-width:0"><b style="font-size:15px">${esc(a.title)}</b><br><span class="muted" style="font-size:12px">${esc(byId('places', a.placeId).name)}${a.time ? ' · ' + esc(a.time) : ''} · ถึงนัดแล้วหรือยัง?</span></span>
+    <button class="pill-btn on" style="white-space:nowrap;flex:none" data-act="apptArrived" data-id="${a.id}">${ic('check', 16, 2.4)}ถึงแล้ว</button></div>`).join('');
+  const held = db.todos.filter((x) => !x.done && x.hold);
   const list = items.length ? items.map((it) => todoRow(it)).join('') : `<div class="empty">ยังไม่มี to-do วันนี้ · กด "เพิ่ม" เพื่อดึงงานย่อยจากโปรเจกต์</div>`;
 
   return `
@@ -67,9 +72,12 @@ function viewToday() {
   </header>
   <div class="week">${week}</div>
   ${status}
+  ${arrive}
   <div class="between"><h2 class="h2">To-do วันนี้ <span style="color:var(--purple-ink)">${doneN}/${items.length}</span></h2>
   <button class="pill-btn" data-act="openPick">${ic('plus', 16, 2)}เพิ่ม</button></div>
-  <div class="stack" id="todo-list">${list}</div>`;
+  <div class="stack" id="todo-list">${list}</div>
+  ${held.length ? `<details class="card" style="padding:12px 16px"><summary class="between" style="cursor:pointer;font-weight:600">เลื่อนไว้ไม่มีกำหนด <span class="muted">${held.length}</span></summary>
+    <div class="stack" style="gap:0;margin-top:8px">${held.map((x) => `<div class="between" style="padding:10px 0;border-top:1px solid var(--line)"><button class="grow t" style="text-align:left;background:none;border:none;padding:0;color:inherit" data-act="editItem" data-kind="todo" data-id="${x.id}">${esc(x.title)}</button><button class="pill-btn" data-act="unhold" data-id="${x.id}">ทำวันนี้</button></div>`).join('')}</div></details>` : ''}`;
 }
 function weekMinutes(monKey) {
   let m = 0; for (let i = 0; i < 7; i++) m += logMinutes(logOf(addDays(monKey, i))); return m;
@@ -80,16 +88,17 @@ function todoRow({ kind, ref }) {
   const due = !ref.done && (dueSoon(ref.due) || (proj && dueSoon(proj.due)));
   const tick = ref.done ? `<button class="tick on" data-act="toggleItem" data-kind="${kind}" data-id="${ref.id}" aria-label="ยกเลิกเสร็จ">${ic('check', 16, 2.6)}</button>`
     : `<button class="tick" data-act="toggleItem" data-kind="${kind}" data-id="${ref.id}" aria-label="ทำเสร็จ"></button>`;
-  return `<div class="todo ${ref.done ? 'done' : ''} ${due ? 'due' : ''} ${kind === 'task' && !ref.done && WAIT[ref.wait] ? 'waiting' : ''}" data-id="${ref.id}">
+  return `<div class="swipe" data-id="${ref.id}"><div class="swipe-acts"><button class="sa" style="background:var(--warn);color:#fff" data-act="delItem" data-kind="${kind}" data-id="${ref.id}">${ic('trash', 18, 2)}<span>ลบ</span></button></div>
+  <div class="todo swipe-row ${ref.done ? 'done' : ''} ${due ? 'due' : ''} ${kind === 'task' && !ref.done && WAIT[ref.wait] ? 'waiting' : ''}" data-id="${ref.id}">
     ${tick}
     <button class="grow" data-act="editItem" data-kind="${kind}" data-id="${ref.id}">
       <span class="t">${esc(ref.title)}</span>
-      <span class="meta">${kind === 'task' && !ref.done && WAIT[ref.wait] ? `<span class="chip ${WAIT[ref.wait].cls}">${ic(WAIT[ref.wait].icon, 12, 2.2)}${WAIT[ref.wait].label}</span>` : ''}${priChip(pri)}<span class="muted" style="font-size:12px">${proj ? esc(proj.name) : 'to-do ลอย'}${ref.movedFrom ? ' · เลื่อนมาจาก ' + fmtShort(ref.movedFrom) : ''}</span>
+      <span class="meta">${allCats()[ref.cat] ? `<span class="chip p2">${ic(allCats()[ref.cat].icon, 12, 2)}${esc(allCats()[ref.cat].label)}</span>` : ''}${kind === 'task' && !ref.done && WAIT[ref.wait] ? `<span class="chip ${WAIT[ref.wait].cls}">${ic(WAIT[ref.wait].icon, 12, 2.2)}${WAIT[ref.wait].label}</span>` : ''}${priChip(pri)}<span class="muted" style="font-size:12px">${proj ? esc(proj.name) : 'to-do ลอย'}${ref.movedFrom ? ' · เลื่อนมาจาก ' + fmtShort(ref.movedFrom) : ''}</span>
       ${due ? `<span class="due-tag">${ic('warn', 12, 2.2)}ใกล้กำหนดส่ง</span>` : ''}</span>
     </button>
     ${kind === 'task' && !ref.done ? `<button class="icon-btn sm" data-act="taskWait" data-id="${ref.id}" aria-label="เปลี่ยนสถานะ">${ic('more', 18, 3)}</button>` : ''}
     <button class="grip" aria-label="ลากเพื่อจัดลำดับ" data-grip>${ic('grip', 18, 3)}</button>
-  </div>`;
+  </div></div>`;
 }
 
 /* ---------- โปรเจกต์ ---------- */
@@ -127,6 +136,18 @@ function projectCard(p) {
     <div class="between" style="font-size:12px;opacity:.85"><span>${esc(cats)}</span>${p.due ? `<span class="row" style="gap:4px">${ic('clock', 12, 2)}ส่ง ${fmtShort(p.due)}</span>` : ''}</div>
   </a>${ui.closeMode ? `<button class="tick pc-done ${done ? 'on' : ''}" data-act="${done ? 'projReopen' : 'projDone'}" data-id="${p.id}" aria-label="${done ? 'ยกเลิกเสร็จ' : 'ทำเครื่องหมายว่าเสร็จ'}">${done ? ic('check', 16, 2.6) : ''}</button>` : ''}</div>`;
 }
+/* แถบเวลาโปรเจกต์: เริ่ม → วันนี้ → กำหนดส่ง */
+function timelineCard(p) {
+  const t = today(); const box = 'padding:14px 16px;border-radius:20px;background:rgba(255,255,255,.1)';
+  if (p.status === 'hold' || !p.due) return `<div style="${box}"><div class="between"><div><div style="font-size:12px;color:var(--on-dark-2)">เริ่ม</div><b>${fmtShort(p.start) || '-'}</b></div><div style="text-align:right"><div style="font-size:12px;color:var(--purple)">กำหนดส่ง</div><b style="color:var(--purple)">${p.status === 'hold' ? 'เลื่อนไม่มีกำหนด' : 'ยังไม่กำหนด'}</b></div></div></div>`;
+  const start = p.start && p.start <= p.due ? p.start : p.due;
+  const total = Math.max(1, diffDays(start, p.due)); const passed = Math.min(total, Math.max(0, diffDays(start, t))); const left = diffDays(t, p.due);
+  const pct = Math.round((passed / total) * 100);
+  return `<div style="${box}">
+    <div class="between"><div><div style="font-size:12px;color:var(--on-dark-2)">เริ่ม</div><b style="font-size:16px">${fmtShort(start)}</b></div><div style="text-align:right"><div style="font-size:12px;color:var(--purple)">กำหนดส่ง</div><b style="font-size:16px;color:var(--purple)">${fmtShort(p.due)}</b></div></div>
+    <div class="tl"><i style="width:${pct}%"></i><span class="tl-s"></span><span class="tl-now" style="left:${pct}%"></span><span class="tl-e"></span></div>
+    <div class="between" style="font-size:13px;color:var(--on-dark-2)"><span>ระยะเวลา ${total} วัน</span><span>ผ่านมา ${passed} วัน</span><b style="color:${left < 0 ? 'var(--warn)' : 'var(--purple)'}">${left < 0 ? `เลยกำหนด ${-left} วัน` : left === 0 ? 'ส่งวันนี้' : `เหลือ ${left} วัน`}</b></div></div>`;
+}
 function viewProject(id) {
   const p = byId('projects', id);
   if (!p) return `<div class="empty">ไม่พบโปรเจกต์นี้</div>`;
@@ -157,9 +178,8 @@ function viewProject(id) {
     <div style="font-size:22px;font-weight:700;line-height:1.4">${esc(p.name)}</div>
     ${p.desc ? `<div style="font-size:14px;color:var(--on-dark-2)">${esc(p.desc)}</div>` : ''}
     <div class="row" style="gap:14px"><div style="flex:1"><div class="bar" style="height:8px;background:rgba(255,255,255,.2)"><i style="width:${Math.round(pr * 100)}%;background:var(--purple)"></i></div><div style="font-size:12px;color:var(--on-dark-2);margin-top:6px">งานย่อยเสร็จ ${ts.filter((x) => x.done).length} จาก ${ts.length}</div></div><div style="font-size:28px;font-weight:700;line-height:1.2">${Math.round(pr * 100)}%</div></div>
-    <div class="grid3"><div style="padding:10px;border-radius:16px;background:rgba(255,255,255,.1)"><div style="font-size:11px;color:var(--on-dark-2)">เริ่ม</div><b style="font-size:14px">${fmtShort(p.start) || '-'}</b></div>
-    <div style="padding:10px;border-radius:16px;background:var(--purple);color:#1E1E20"><div style="font-size:11px">กำหนดส่ง</div><b style="font-size:14px">${fmtShort(p.due) || '-'}</b></div>
-    <div style="padding:10px;border-radius:16px;background:rgba(255,255,255,.1)"><div style="font-size:11px;color:var(--on-dark-2)">หมวด</div><b style="font-size:13px">${esc(cats)}</b></div></div>
+    ${timelineCard(p)}
+    <div style="padding:14px 16px;border-radius:20px;background:rgba(255,255,255,.1)"><div style="font-size:12px;color:var(--on-dark-2)">หมวด</div><b style="font-size:15px">${esc(cats)}</b></div>
   </section>
   <div class="between"><h2 class="h2">งานย่อย <span style="color:var(--purple-ink)">${ts.filter((x) => x.done).length}/${ts.length}</span></h2>${ts.length > 1 ? `<button class="pill-btn ${ui.sortMode ? 'on' : ''}" data-act="sortMode">${ui.sortMode ? 'เสร็จสิ้น' : 'จัดลำดับ'}</button>` : ''}</div>
   ${ui.sortMode ? '' : `<form class="search" data-form="addTask" data-id="${id}" style="border-radius:20px;padding-right:6px">${ic('plus', 18, 2)}<input name="title" placeholder="เพิ่มงานย่อย" aria-label="เพิ่มงานย่อย" autocomplete="off"><button class="pill-btn" style="background:var(--dark);color:var(--on-dark);border:none;height:40px">บันทึก</button></form>`}
@@ -421,6 +441,9 @@ function viewStats() {
 /* มีอะไรใหม่ — ใส่เฉพาะฟีเจอร์/การเปลี่ยนแปลงใหญ่ (ไม่ต้องใส่การแก้คำ/ขนาด/สี) ใหม่สุดอยู่บน */
 const CHANGELOG = [
   { ver: 'เวอร์ชัน 1.1', date: '30 ต.ค. 2569', items: [
+    'to-do: เลือกหมวดได้ · ขยายเวลา หรือเลื่อนไม่มีกำหนด · ปัดซ้ายเพื่อลบ · to-do ลอยผูกโปรเจกต์ได้',
+    'โปรเจกต์: แถบเวลาเริ่ม–กำหนดส่ง · ขยายเวลา หรือเลื่อนไม่มีกำหนด',
+    'นัดหมาย: ผูกโปรเจกต์ จังหวัด หมวดสถานที่ · หน้าวันนี้มีป้ายให้ติ๊กว่าถึงนัดแล้ว',
     'to-do วันนี้: งานย่อยตั้งสถานะ "รอตรวจสอบ" · "รอข้อมูล" ได้',
     'สถานที่: ขับรถใส่เป็นชั่วโมง + นาที · การไปผูกได้ทั้งโปรเจกต์และนัดหมาย',
     'นัดหมาย: ใส่สถานที่ได้ ถึงวันนัดจะบันทึกลงหน้าสถานที่ให้เอง',

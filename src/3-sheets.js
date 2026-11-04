@@ -29,6 +29,10 @@ function bindOpts(root) {
   });
 }
 const fd = (form) => Object.fromEntries(new FormData(form).entries());
+// หมวดของ to-do (ใช้หมวดเดียวกับโปรเจกต์) แตะซ้ำ = ไม่เลือก
+const todoCatH = (cur) => `<div class="field"><span class="label">หมวด (ถ้ามี)</span><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px">${Object.entries(allCats()).map(([k, c]) => `<button type="button" class="opt ${k === cur ? 'on' : ''}" data-opt="cat" data-toggle="1" data-v="${k}">${ic(c.icon, 18, 2)}${esc(c.label)}</button>`).join('')}</div><input type="hidden" name="cat" value="${cur || ''}"></div>`;
+// ขยายเวลา (+1/+3/+7 วัน) หรือเลื่อนไม่มีกำหนด
+const extendH = (kind, id) => `<div class="field"><span class="label">ขยายเวลา</span><div class="row" style="gap:6px;flex-wrap:wrap">${[1, 3, 7].map((n) => `<button type="button" class="pill-btn" data-act="extend" data-kind="${kind}" data-id="${id}" data-n="${n}">+${n} วัน</button>`).join('')}<button type="button" class="pill-btn" data-act="holdItem" data-kind="${kind}" data-id="${id}">${ic('minus', 14, 2.2)}เลื่อนไม่มีกำหนด</button></div></div>`;
 const fieldH = (label, inner) => `<label class="field"><span class="label">${label}</span>${inner}</label>`;
 const inputH = (name, val = '', type = 'text', ph = '') => `<input class="input" name="${name}" type="${type}" value="${esc(val)}" placeholder="${esc(ph)}">`;
 const areaH = (name, val = '', ph = '') => `<textarea class="input" name="${name}" placeholder="${esc(ph)}">${esc(val)}</textarea>`;
@@ -100,7 +104,10 @@ function sheetTodo(id) {
   openSheet(x ? 'แก้ไข to-do' : 'to-do ลอย', `<form class="stack" style="gap:16px" data-form="todo" data-id="${id || ''}">
     ${fieldH('ชื่องาน', inputH('title', x?.title || '', 'text', 'ต้องทำอะไร'))}
     <div class="field"><span class="label">ความสำคัญ</span>${optTiles('priority', Object.entries(PRIORITY).map(([k, v]) => [k, v.label, v.icon]), x?.priority || 4)}</div>
+    ${todoCatH(x?.cat)}
+    ${fieldH('ผูกโปรเจกต์ (ถ้ามี)', `<select class="input" name="projectId"><option value="">— ไม่ผูกโปรเจกต์ —</option>${db.projects.filter((p) => !['done', 'archived'].includes(p.status)).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>`)}
     ${fieldH('วันที่ทำ', inputH('date', x?.date || today(), 'date'))}
+    ${x ? extendH('todo', x.id) : ''}
     ${fieldH('โน้ต', areaH('note', x?.note || ''))}
     <button class="btn">บันทึก</button>${x ? `<button type="button" class="btn ghost" style="color:var(--warn-ink)" data-act="delItem" data-kind="todo" data-id="${x.id}">ลบ to-do นี้</button>` : ''}</form>`, bindOpts);
 }
@@ -111,7 +118,9 @@ function sheetTask(id) {
     ${fieldH('ชื่องาน', inputH('title', x.title))}
     <div class="field"><span class="label">โปรเจกต์</span><div class="input row" style="background:var(--bg)">${esc(p?.name || '-')}</div></div>
     <div class="field"><span class="label">ความสำคัญ</span>${optTiles('priority', Object.entries(PRIORITY).map(([k, v]) => [k, v.label, v.icon]), x.priority || p?.priority || 4)}</div>
+    ${todoCatH(x.cat)}
     <div class="grid2">${fieldH('วันที่ทำ', inputH('plannedFor', x.plannedFor || '', 'date'))}${fieldH('กำหนดส่ง', inputH('due', x.due || '', 'date'))}</div>
+    ${extendH('task', id)}
     ${fieldH('โน้ต', areaH('note', x.note || ''))}
     <button class="btn">บันทึก</button><button type="button" class="btn ghost" style="color:var(--warn-ink)" data-act="delItem" data-kind="task" data-id="${id}">ลบงานย่อยนี้</button></form>`, bindOpts);
 }
@@ -143,6 +152,9 @@ function sheetProjectMenu(id) {
   openSheet('จัดการโปรเจกต์', `<div class="stack">
     ${done ? `<button class="lrow" data-act="projReopen" data-id="${id}"><span class="av p2">${ic('hourglass', 18, 2)}</span><span class="grow"><span class="t">เปิดโปรเจกต์อีกครั้ง</span><span class="muted" style="font-size:12px">กลับไปเป็น "กำลังทำ"</span></span></button>`
       : ''}
+    ${done ? '' : `<button class="lrow" data-act="projExtend" data-id="${id}"><span class="av p2">${ic('cal', 18, 2)}</span><span class="grow"><span class="t">ขยายเวลา</span><span class="muted" style="font-size:12px">${p.due ? 'กำหนดส่งตอนนี้ ' + fmtShort(p.due) : 'ยังไม่มีกำหนดส่ง'}</span></span>${ic('right', 16, 2)}</button>
+    ${p.status === 'hold' ? `<button class="lrow" data-act="projResume" data-id="${id}"><span class="av p2">${ic('hourglass', 18, 2)}</span><span class="grow"><span class="t">กลับมาทำต่อ</span><span class="muted" style="font-size:12px">เปลี่ยนเป็น "กำลังทำ"</span></span></button>`
+      : `<button class="lrow" data-act="projHold" data-id="${id}"><span class="av p4">${ic('minus', 18, 2)}</span><span class="grow"><span class="t">เลื่อนออกไปไม่มีกำหนด</span><span class="muted" style="font-size:12px">ล้างกำหนดส่ง พักไว้ก่อน</span></span></button>`}`}
     <button class="lrow" data-act="delProject" data-id="${id}"><span class="av p1">${ic('trash', 18, 2)}</span><span class="grow"><span class="t" style="color:var(--warn-ink)">ลบโปรเจกต์</span><span class="muted" style="font-size:12px">ลบงานย่อยทั้งหมดด้วย</span></span></button></div>`);
 }
 
@@ -154,7 +166,9 @@ function sheetAppt(id, k) {
     <div class="grid2">${fieldH('วันเริ่ม', inputH('start', a?.start || k || today(), 'date'))}${fieldH('ถึงวันที่ (ถ้าหลายวัน)', inputH('end', a?.end || '', 'date'))}</div>
     ${fieldH('เวลา (ถ้ามี)', inputH('time', a?.time || '', 'time'))}
     ${fieldH('สถานที่ (ถ้ามี)', `<input class="input" name="place" list="appt-places" value="${esc(byId('places', a?.placeId)?.name || '')}" placeholder="พิมพ์ชื่อ หรือเลือกจากที่บันทึกไว้" autocomplete="off"><datalist id="appt-places">${db.places.map((x) => `<option value="${esc(x.name)}">`).join('')}</datalist>`)}
-    <div class="muted" style="font-size:12px;margin-top:-8px">ถึงวันนัด สถานที่นี้จะบันทึกไว้ในหน้าบันทึกให้เอง</div>
+    <div class="grid2">${fieldH('จังหวัด', `<select class="input" name="province"><option value="">—</option>${PROVINCES.map((n) => `<option ${n === byId('places', a?.placeId)?.province ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}${fieldH('หมวดสถานที่', `<select class="input" name="pcat"><option value="">—</option>${placeCats().map((c) => `<option ${c.name === byId('places', a?.placeId)?.cat ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>`)}</div>
+    <div class="muted" style="font-size:12px;margin-top:-8px">ถึงวันนัด หน้าวันนี้จะมีป้ายให้ติ๊กว่ามาถึงแล้ว แล้วจะบันทึกลงหน้าสถานที่ให้</div>
+    <div class="field"><span class="label">ผูกโปรเจกต์ (ถ้ามี)</span>${projectSelect('projectId', a?.projectId || '')}</div>
     ${fieldH('โน้ต', areaH('note', a?.note || ''))}
     <button class="btn">บันทึก</button>${a ? `<button type="button" class="btn ghost" style="color:var(--warn-ink)" data-act="delAppt" data-id="${a.id}">ลบนัดนี้</button>` : ''}</form>`);
 }
@@ -298,6 +312,28 @@ const ACT = {
     x.wait = k || null;
     save(); closeSheet(); render();
   },
+  extend: (el) => {
+    const t = el.dataset.kind === 'task'; const x = byId(t ? 'tasks' : 'todos', el.dataset.id); const n = Number(el.dataset.n);
+    if (t) { x.plannedFor = addDays(x.plannedFor && x.plannedFor > today() ? x.plannedFor : today(), n); if (x.due) x.due = addDays(x.due, n); }
+    else { x.date = addDays(x.date && x.date > today() ? x.date : today(), n); x.hold = false; }
+    save(); closeSheet(); render(); toast(`ขยายไป ${fmtShort(t ? x.plannedFor : x.date)}`);
+  },
+  holdItem: (el) => {
+    const t = el.dataset.kind === 'task'; const x = byId(t ? 'tasks' : 'todos', el.dataset.id);
+    if (t) x.plannedFor = null; else { x.hold = true; x.date = null; }
+    save(); closeSheet(); render(); toast(t ? 'ย้ายกลับไปไว้ในโปรเจกต์แล้ว' : 'เลื่อนไว้ไม่มีกำหนด');
+  },
+  unhold: (el) => { const x = byId('todos', el.dataset.id); x.hold = false; x.date = today(); save(); render(); },
+  projExtend: (el) => {
+    const p = byId('projects', el.dataset.id);
+    openSheet('ขยายเวลา', `<form class="stack" style="gap:14px" data-form="projDue" data-id="${p.id}"><div class="muted" style="margin-top:-10px">${esc(p.name)}</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">${[3, 7, 14, 30].map((n) => `<button type="button" class="pill-btn" data-act="projDueAdd" data-n="${n}">+${n} วัน</button>`).join('')}</div>
+      ${fieldH('กำหนดส่งใหม่', inputH('due', p.due || today(), 'date'))}<button class="btn">บันทึก</button></form>`);
+  },
+  projDueAdd: (el) => { const f = el.closest('form'); const p = byId('projects', f.dataset.id); f.due.value = addDays(p.due && p.due > today() ? p.due : today(), Number(el.dataset.n)); },
+  projHold: (el) => { const p = byId('projects', el.dataset.id); p.status = 'hold'; p.due = null; save(); closeSheet(); render(); toast('เลื่อนออกไปไม่มีกำหนด'); },
+  projResume: (el) => { const p = byId('projects', el.dataset.id); p.status = 'doing'; save(); closeSheet(); render(); },
+  apptArrived: (el) => { const a = byId('appts', el.dataset.id); logApptVisit(a); save(); render(); toast('บันทึกการไปแล้ว'); },
   planToday: (el) => { const x = byId('tasks', el.dataset.id); x.plannedFor = today(); x.movedFrom = null; save(); render(); toast('ใส่ใน to-do วันนี้แล้ว'); },
   pickConfirm: () => {
     const sel = $('.sheet')._sel; if (!sel?.size) return;
@@ -405,11 +441,18 @@ const FORM = {
   },
   checkout: (f, v) => { const l = logOf(today()); Object.assign(l, { in: v.in, out: v.out, mood: v.mood === '' ? null : Number(v.mood), note: v.note }); toast('เลิกงานแล้ว พักผ่อนให้เต็มที่นะ'); },
   todo: (f, v) => {
-    const id = f.dataset.id; const data = { title: v.title.trim(), priority: Number(v.priority), date: v.date || today(), note: v.note };
+    const id = f.dataset.id; const data = { title: v.title.trim(), priority: Number(v.priority), date: v.date || today(), note: v.note, cat: v.cat || null, hold: false };
     if (!data.title) return false;
+    // ผูกโปรเจกต์ = ย้ายไปเป็นงานย่อยของโปรเจกต์นั้น (ยังอยู่ใน to-do วันที่เลือก)
+    if (v.projectId) {
+      const old = id && byId('todos', id);
+      db.tasks.push({ id: id || uid(), projectId: v.projectId, title: data.title, priority: data.priority, cat: data.cat, note: data.note, done: !!old?.done, doneAt: old?.doneAt || null, order: tasksOf(v.projectId).length, plannedFor: data.date });
+      if (id) db.todos = db.todos.filter((y) => y.id !== id);
+      return;
+    }
     if (id) Object.assign(byId('todos', id), data); else db.todos.push({ id: uid(), done: false, ...data });
   },
-  task: (f, v) => { Object.assign(byId('tasks', f.dataset.id), { title: v.title.trim(), priority: Number(v.priority), plannedFor: v.plannedFor || null, due: v.due || null, note: v.note }); },
+  task: (f, v) => { Object.assign(byId('tasks', f.dataset.id), { title: v.title.trim(), priority: Number(v.priority), plannedFor: v.plannedFor || null, due: v.due || null, note: v.note, cat: v.cat || null }); },
   addTask: (f, v) => {
     const title = (v.title || '').trim(); if (!title) return false;
     db.tasks.push({ id: uid(), projectId: f.dataset.id, title, done: false, order: tasksOf(f.dataset.id).length, plannedFor: null });
@@ -423,18 +466,20 @@ const FORM = {
     if (id) Object.assign(byId('projects', id), data);
     else { const p = { id: uid(), status: data.status || 'todo', createdAt: today(), ...data }; db.projects.push(p); setTimeout(() => (location.hash = '#/project/' + p.id)); }
   },
+  projDue: (f, v) => { const p = byId('projects', f.dataset.id); p.due = v.due || null; if (p.status === 'hold') p.status = 'doing'; toast('ขยายเวลาแล้ว'); },
   appt: (f, v) => {
-    const id = f.dataset.id; const data = { title: v.title.trim(), start: v.start, end: v.end && v.end > v.start ? v.end : null, time: v.time, note: v.note };
+    const id = f.dataset.id; const data = { title: v.title.trim(), start: v.start, end: v.end && v.end > v.start ? v.end : null, time: v.time, note: v.note, projectId: v.projectId || null };
     if (!data.title) return false;
     const pn = (v.place || '').trim();
     let pl = pn ? db.places.find((x) => x.name.trim() === pn) : null;
     if (pn && !pl) { pl = { id: uid(), name: pn, visits: [] }; db.places.push(pl); }
+    if (pl) { if (v.province) pl.province = v.province; if (v.pcat) pl.cat = v.pcat; }
     data.placeId = pl?.id || null;
     const a = id ? byId('appts', id) : { id: uid() };
     // เปลี่ยนสถานที่หรือวัน: ลบการไปที่บันทึกไว้เดิม แล้วบันทึกใหม่
     if (a.visitId && (a.placeId !== data.placeId || a.start !== data.start)) { const op = byId('places', a.placeId); if (op) op.visits = (op.visits || []).filter((x) => x.id !== a.visitId); a.visitId = null; }
     Object.assign(a, data); if (!id) db.appts.push(a);
-    if (a.placeId && !a.visitId && a.start <= today()) logApptVisit(a);
+
   },
   place: (f, v) => {
     const id = f.dataset.id; if (!v.name.trim()) return false;
@@ -475,17 +520,16 @@ function bindDrag() {
   list.addEventListener('pointerdown', (e) => {
     const g = e.target.closest('[data-grip]'); if (!g) return;
     e.preventDefault();
-    const row = g.closest('.todo'); row.classList.add('dragging'); g.setPointerCapture(e.pointerId);
+    // แถวที่ลากคือกล่อง .swipe ทั้งก้อน · หาตำแหน่งจากแถวอื่นตามแนวตั้ง (ไม่ใช้ elementFromPoint เพราะนิ้วทับแถวที่ลากอยู่)
+    const row = g.closest('.swipe'); row.classList.add('dragging'); g.setPointerCapture(e.pointerId);
     const move = (ev) => {
-      const over = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('.todo');
-      if (over && over !== row && over.parentNode === list) {
-        const r = over.getBoundingClientRect();
-        list.insertBefore(row, ev.clientY < r.top + r.height / 2 ? over : over.nextSibling);
-      }
+      const others = $$(':scope > .swipe', list).filter((x) => x !== row);
+      const before = others.find((x) => { const r = x.getBoundingClientRect(); return ev.clientY < r.top + r.height / 2; });
+      if (before) { if (row.nextSibling !== before) list.insertBefore(row, before); } else if (list.lastElementChild !== row) list.appendChild(row);
     };
     const up = () => {
       row.classList.remove('dragging'); g.removeEventListener('pointermove', move); g.removeEventListener('pointerup', up); g.removeEventListener('pointercancel', up);
-      db.settings.todayOrder[today()] = $$('.todo', list).map((x) => x.dataset.id); save();
+      db.settings.todayOrder[today()] = $$(':scope > .swipe', list).map((x) => x.dataset.id); save(); render();
     };
     g.addEventListener('pointermove', move); g.addEventListener('pointerup', up); g.addEventListener('pointercancel', up);
   });
@@ -503,7 +547,7 @@ function render() {
   const focusId = document.activeElement?.id; const caret = document.activeElement?.selectionStart;
   view.innerHTML = V[0]();
   renderTabbar(V[1]);
-  if (route === 'today') bindDrag();
+  if ($('#todo-list')) bindDrag();
   if (focusId === 'recq') { const i = $('#recq'); i.focus(); i.setSelectionRange(caret, caret); }
 }
 
@@ -574,7 +618,7 @@ if (!logOf(today()) && db.settings.lastCheckinPrompt !== today() && (location.ha
 /* ปัดงานย่อยไปทางซ้ายเพื่อโชว์ปุ่ม วันนี้ · แก้ไข · ลบ */
 let swipeS = null;
 document.addEventListener('touchstart', (e) => {
-  const row = e.target.closest('.swipe-row'); if (!row) return;
+  const row = e.target.closest('.swipe-row'); if (!row || e.target.closest('[data-grip]')) return;
   $$('.swipe-row.open').forEach((r) => { if (r !== row) { r.classList.remove('open'); r.style.transform = ''; } });
   swipeS = { row, x: e.touches[0].clientX, y: e.touches[0].clientY, base: row.classList.contains('open') ? -row.previousElementSibling.offsetWidth : 0, dx: 0, lock: null };
 }, { passive: true });

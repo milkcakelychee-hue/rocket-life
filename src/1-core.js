@@ -89,6 +89,7 @@ const STATUS = {
   doing: { label: 'กำลังทำ', icon: 'hourglass', tone: 'p2' },
   waiting: { label: 'รอข้อมูล', icon: 'clock', tone: 'p3' },
   revise: { label: 'รอแก้ไข', icon: 'edit', tone: 'p1' },
+  hold: { label: 'เลื่อนไม่มีกำหนด', icon: 'minus', tone: 'p4' },
   done: { label: 'เสร็จแล้ว', icon: 'check', tone: 'p4' },
   archived: { label: 'Archive', icon: 'box', tone: 'p4' },
 };
@@ -182,7 +183,7 @@ const byId = (list, id) => db[list].find((x) => x.id === id);
 
 function logApptVisit(a) {
   const pl = byId('places', a.placeId); if (!pl) return;
-  a.visitId = uid(); pl.visits = [...(pl.visits || []), { id: a.visitId, date: a.start, apptId: a.id }];
+  a.visitId = uid(); pl.visits = [...(pl.visits || []), { id: a.visitId, date: a.start, apptId: a.id, projectId: a.projectId || null }];
 }
 /* ---------- กฎอัตโนมัติ (ทำตอนเปิดแอป) ---------- */
 function runDailyRules() {
@@ -192,8 +193,6 @@ function runDailyRules() {
   db.todos.forEach((x) => { if (!x.done && x.date < t) { x.movedFrom = x.date; x.date = t; } });
   // โปรเจกต์ที่ log ว่าเสร็จแล้ว วันถัดไปเข้า Archive เอง
   db.projects.forEach((p) => { if (p.status === 'done' && p.doneAt && p.doneAt < t) { p.status = 'archived'; p.archivedAt = t; } });
-  // นัดที่มีสถานที่ ถึงวันแล้ว บันทึกเป็นการไปสถานที่นั้น
-  db.appts.forEach((a) => { if (a.placeId && !a.visitId && a.start <= t) logApptVisit(a); });
   db.settings.lastRollover = t;
   save();
 }
@@ -217,6 +216,7 @@ function todayItems(k = today()) {
   const order = db.settings.todayOrder[k] || [];
   const all = [...tasks, ...todos];
   all.sort((a, b) => {
+    if (!!a.ref.done !== !!b.ref.done) return a.ref.done ? 1 : -1; // งานที่ปิดแล้วอยู่ล่างสุดเสมอ
     const ia = order.indexOf(a.ref.id), ib = order.indexOf(b.ref.id);
     return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
   });
