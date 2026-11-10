@@ -273,3 +273,51 @@ textarea.input { height: 80px; padding: 12px 16px; resize: none; }
 /* ซ่อนปุ่มหลังแถวจนกว่าจะปัด กันสีแดงโผล่ตามขอบมน */
 .swipe-acts { opacity: 0; }
 .swipe:has(.swipe-row[style*="translate"]) .swipe-acts { opacity: 1; }
+
+/* ----- หน้าคอม (≥1024px): เมนูซ้าย + บอร์ด ----- */
+.vtabs { display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+.vb { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: none; border-radius: 9px; background: transparent; color: var(--ink-2); font-size: 13px; }
+.vb.on { background: var(--dark); color: var(--on-dark); }
+.board { display: flex; flex-direction: column; gap: 12px; }
+.bcols { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.bcol { background: var(--card-2); border-radius: 18px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 160px; transition: outline-color .15s; outline: 2px solid transparent; }
+.bcol-h { font-size: 13px; font-weight: 600; padding: 2px 4px; }
+.bcol-h i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.bempty { font-size: 12px; color: var(--ink-3); text-align: center; padding: 18px 0; border: 1.5px dashed var(--line-2); border-radius: 12px; }
+.bcard { background: var(--card); border-radius: 12px; border-left: 4px solid var(--pri); box-shadow: 0 1px 0 var(--line); cursor: grab; }
+.bcard > button { width: 100%; display: flex; flex-direction: column; align-items: stretch; text-align: left; padding: 10px 12px; background: none; border: none; color: inherit; }
+.bcard .t { font-size: 14px; font-weight: 500; line-height: 1.4; }
+.bcard.hot { background: var(--warn-soft); }
+.bcard.waiting { background: var(--card-2); border-left-color: var(--ink-3); }
+.bcard.waiting .t, .bcard.done .t { color: var(--ink-2); }
+.bcard.done .t { text-decoration: line-through; }
+.bcat { width: 24px; height: 24px; border-radius: 50%; background: var(--purple-soft); color: var(--purple-ink); display: flex; align-items: center; justify-content: center; }
+.dragging { opacity: .45; }
+.drop-on { outline-color: var(--purple) !important; }
+.btable { background: var(--card); border-radius: 18px; overflow: hidden; }
+.brow { display: grid; grid-template-columns: var(--cols); gap: 10px; align-items: center; padding: 8px 14px; border-top: 1px solid var(--line); font-size: 13px; }
+.brow.bhead { border-top: none; color: var(--ink-3); font-size: 12px; }
+.brow .t { text-align: left; background: none; border: none; padding: 0; color: inherit; font-size: 14px; }
+.brow.done .t { text-decoration: line-through; color: var(--ink-3); }
+.tsel { height: 34px; padding: 0 8px; font-size: 13px; }
+.bcal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.bday { min-height: 160px; background: var(--card); border-radius: 14px; padding: 8px; display: flex; flex-direction: column; gap: 6px; outline: 2px solid transparent; }
+.bday.today { box-shadow: inset 0 0 0 2px var(--purple); }
+.bchip { text-align: left; font-size: 12px; padding: 5px 8px; border-radius: 8px; border: none; background: var(--purple-soft); color: var(--purple-deep); cursor: grab; }
+.bchip.done { background: var(--card-2); color: var(--ink-3); text-decoration: line-through; }
+@media (min-width: 1024px) {
+  #view { max-width: 1180px; margin: 0 0 0 232px; padding: 32px 36px 60px; }
+  #tabbar { top: 0; bottom: 0; right: auto; width: 208px; height: auto; max-width: none; margin: 0; padding: 28px 12px; border-radius: 0; border-top: none; border-right: 1px solid var(--line); box-shadow: none; display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
+  #tabbar a, #tabbar .center { height: 44px; flex-direction: row; justify-content: flex-start; gap: 12px; padding: 0 14px; border-radius: 12px; font-size: 15px; position: static; }
+  #tabbar a.on { background: var(--purple); color: #1E1E20; }
+  #tabbar a.on .pillic { width: auto; height: auto; background: none; }
+  #tabbar .center { order: -1; }
+  #tabbar .center .ring { display: none; }
+  #tabbar .center .fab { position: static; width: auto; height: auto; background: none; box-shadow: none; color: inherit; }
+  #tabbar .center .fab svg { width: 22px; height: 22px; }
+  #tabbar .center span.lb { padding: 0; font-size: 15px; }
+  #tabbar .center[aria-current] { background: var(--purple); color: #1E1E20; }
+  .sheet-dim { background: rgba(0,0,0,.18); }
+  .sheet { left: auto; right: 0; top: 0; bottom: 0; width: 460px; max-width: none; max-height: none; margin: 0; border-radius: 28px 0 0 28px; animation: none; }
+  .sheet .grab { display: none; }
+}

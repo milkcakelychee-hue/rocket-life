@@ -18,6 +18,7 @@ const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const P = {
   folder: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
   cal: 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',
+  cols: 'M4 5h4v14H4zM10 5h4v14h-4zM16 5h4v14h-4z',
   sun: 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5',
   note: 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5',
   stats: 'M5 20V12M12 20V5M19 20v-9',

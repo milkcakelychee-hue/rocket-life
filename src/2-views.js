@@ -75,7 +75,7 @@ function viewToday() {
   ${arrive}
   <div class="between"><h2 class="h2">To-do วันนี้ <span style="color:var(--purple-ink)">${doneN}/${items.length}</span></h2>
   <button class="pill-btn" data-act="openPick">${ic('plus', 16, 2)}เพิ่ม</button></div>
-  <div class="stack" id="todo-list">${list}</div>
+  ${isDesk() ? deskBoard('today') : `<div class="stack" id="todo-list">${list}</div>`}
   ${held.length ? `<details class="card" style="padding:12px 16px"><summary class="between" style="cursor:pointer;font-weight:600">เลื่อนไว้ไม่มีกำหนด <span class="muted">${held.length}</span></summary>
     <div class="stack" style="gap:0;margin-top:8px">${held.map((x) => `<div class="between" style="padding:10px 0;border-top:1px solid var(--line)"><button class="grow t" style="text-align:left;background:none;border:none;padding:0;color:inherit" data-act="editItem" data-kind="todo" data-id="${x.id}">${esc(x.title)}</button><button class="pill-btn" data-act="unhold" data-id="${x.id}">ทำวันนี้</button></div>`).join('')}</div></details>` : ''}`;
 }
@@ -181,10 +181,10 @@ function viewProject(id) {
     ${timelineCard(p)}
     <div style="padding:14px 16px;border-radius:20px;background:rgba(255,255,255,.1)"><div style="font-size:12px;color:var(--on-dark-2)">หมวด</div><b style="font-size:15px">${esc(cats)}</b></div>
   </section>
-  <div class="between"><h2 class="h2">งานย่อย <span style="color:var(--purple-ink)">${ts.filter((x) => x.done).length}/${ts.length}</span></h2>${ts.length > 1 ? `<button class="pill-btn ${ui.sortMode ? 'on' : ''}" data-act="sortMode">${ui.sortMode ? 'เสร็จสิ้น' : 'จัดลำดับ'}</button>` : ''}</div>
+  <div class="between"><h2 class="h2">งานย่อย <span style="color:var(--purple-ink)">${ts.filter((x) => x.done).length}/${ts.length}</span></h2>${ts.length > 1 && !isDesk() ? `<button class="pill-btn ${ui.sortMode ? 'on' : ''}" data-act="sortMode">${ui.sortMode ? 'เสร็จสิ้น' : 'จัดลำดับ'}</button>` : ''}</div>
   ${ui.sortMode ? '' : `<form class="search" data-form="addTask" data-id="${id}" style="border-radius:20px;padding-right:6px">${ic('plus', 18, 2)}<input name="title" placeholder="เพิ่มงานย่อย" aria-label="เพิ่มงานย่อย" autocomplete="off"><button class="pill-btn" style="background:var(--dark);color:var(--on-dark);border:none;height:40px">บันทึก</button></form>`}
-  ${ts.length && !ui.sortMode ? '<div class="muted" style="font-size:12px;margin-top:-8px">ปัดงานย่อยไปทางซ้าย เพื่อใส่ to-do วันนี้ · แก้ไข · ลบ</div>' : ''}
-  <div class="stack">${tasks || '<div class="empty">ยังไม่มีงานย่อย</div>'}</div>
+  ${ts.length && !ui.sortMode && !isDesk() ? '<div class="muted" style="font-size:12px;margin-top:-8px">ปัดงานย่อยไปทางซ้าย เพื่อใส่ to-do วันนี้ · แก้ไข · ลบ</div>' : ''}
+  ${isDesk() ? deskBoard(id) : `<div class="stack">${tasks || '<div class="empty">ยังไม่มีงานย่อย</div>'}</div>`}
   <h2 class="h2">ผูกไว้กับ</h2>
   <div class="grid3">${link('pin', 'สถานที่', linkedPlaces.length, linkedPlaces[0]?.name || '-', '#/records/place')}${link('person', 'คน', linkedPeople.length, linkedPeople[0]?.name || '-', '#/records/person')}${link('note', 'โน้ต', linkedNotes.length, linkedNotes[0]?.title || '-', '#/records/note')}</div>`;
 }
@@ -441,6 +441,7 @@ function viewStats() {
 /* มีอะไรใหม่ — ใส่เฉพาะฟีเจอร์/การเปลี่ยนแปลงใหญ่ (ไม่ต้องใส่การแก้คำ/ขนาด/สี) ใหม่สุดอยู่บน */
 const CHANGELOG = [
   { ver: 'เวอร์ชัน 1.1', date: '30 ต.ค. 2569', items: [
+    'หน้าคอม: เมนูด้านซ้าย · บอร์ดงานสลับดูแบบการ์ด / ตาราง / ปฏิทิน',
     'ซิงก์ข้ามเครื่อง: เข้าสู่ระบบในตั้งค่า ข้อมูลตรงกันทุกเครื่อง',
     'to-do: เลือกหมวดได้ · ขยายเวลา หรือเลื่อนไม่มีกำหนด · ปัดซ้ายเพื่อลบ · to-do ลอยผูกโปรเจกต์ได้',
     'โปรเจกต์: แถบเวลาเริ่ม–กำหนดส่ง · ขยายเวลา หรือเลื่อนไม่มีกำหนด',
