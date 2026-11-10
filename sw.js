@@ -1,5 +1,5 @@
 // Rocket Life service worker — ใช้ออฟไลน์ได้ (network-first: มีเน็ตโหลดเวอร์ชันล่าสุด ออฟไลน์ใช้ของใน cache)
-const CACHE = 'rocketlife-v17';
+const CACHE = 'rocketlife-v18';
 const ASSETS = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
@@ -17,7 +17,7 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   const mine = url.origin === location.origin;
-  if (!mine && !url.host.includes('fonts.g')) return;
+  if (!mine && !url.host.includes('fonts.g') && !url.host.includes('cdn.jsdelivr')) return;
   e.respondWith(
     fetch(mine ? new Request(e.request, { cache: 'no-cache' }) : e.request).then((res) => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }

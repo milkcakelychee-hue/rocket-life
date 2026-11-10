@@ -178,6 +178,7 @@ function load() {
 }
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { toast('บันทึกไม่สำเร็จ พื้นที่ในเครื่องอาจเต็ม'); }
+  if (typeof queuePush === 'function') queuePush();
 }
 const byId = (list, id) => db[list].find((x) => x.id === id);
 

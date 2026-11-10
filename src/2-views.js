@@ -441,6 +441,7 @@ function viewStats() {
 /* มีอะไรใหม่ — ใส่เฉพาะฟีเจอร์/การเปลี่ยนแปลงใหญ่ (ไม่ต้องใส่การแก้คำ/ขนาด/สี) ใหม่สุดอยู่บน */
 const CHANGELOG = [
   { ver: 'เวอร์ชัน 1.1', date: '30 ต.ค. 2569', items: [
+    'ซิงก์ข้ามเครื่อง: เข้าสู่ระบบในตั้งค่า ข้อมูลตรงกันทุกเครื่อง',
     'to-do: เลือกหมวดได้ · ขยายเวลา หรือเลื่อนไม่มีกำหนด · ปัดซ้ายเพื่อลบ · to-do ลอยผูกโปรเจกต์ได้',
     'โปรเจกต์: แถบเวลาเริ่ม–กำหนดส่ง · ขยายเวลา หรือเลื่อนไม่มีกำหนด',
     'นัดหมาย: ผูกโปรเจกต์ จังหวัด หมวดสถานที่ · หน้าวันนี้มีป้ายให้ติ๊กว่าถึงนัดแล้ว',
@@ -479,6 +480,7 @@ function viewSettings() {
   </section>
   ${stale ? `<div class="card row" style="background:var(--amber-soft);color:var(--amber-ink);gap:12px">${ic('warn', 22)}<div style="font-size:14px"><b>${lb ? `ไม่ได้สำรองข้อมูลมา ${diffDays(lb.slice(0, 10), today())} วัน` : 'ยังไม่เคยสำรองข้อมูล'}</b><br>สำรองไว้กันข้อมูลหายนะ</div></div>` : ''}
   <section class="card" style="padding:0;overflow:hidden"><div class="label" style="padding:14px 14px 6px">ข้อมูล</div>
+    ${row('up', 'ซิงก์ข้ามเครื่อง', '<span id="sync-state">' + syncLabel() + '</span>', '', 'openLogin')}
     ${row('down', 'สำรองข้อมูล', `ไฟล์ JSON · ${lb ? 'ล่าสุด ' + fmtShort(lb.slice(0, 10)) : 'ยังไม่เคย'}`, '<span class="pill-btn" style="background:var(--dark);color:var(--on-dark);border:none;height:36px">สำรองเลย</span>', 'backup')}
     ${row('up', 'กู้คืนจากไฟล์', 'เลือกไฟล์สำรองเพื่อกู้คืน', '', 'restore')}
     ${row('table', 'ส่งออก CSV', 'สำหรับเปิดใน Sheets / Excel', '', 'exportCsv')}
