@@ -5,6 +5,7 @@ const ui = { projFilter: 'all', closeMode: false, sortMode: false, placeCat: nul
 
 /* ---------- เมนูล่าง ---------- */
 function renderTabbar(active) {
+  if (isDesk()) { $('#tabbar').innerHTML = deskSidebar(active); return; }
   const tab = (href, key, icon, label) => active === key
     ? `<a href="${href}" class="on" aria-current="page"><span class="pillic">${ic(icon, 22)}</span>${label}</a>`
     : `<a href="${href}">${ic(icon, 22)}${label}</a>`;
@@ -18,6 +19,7 @@ function renderTabbar(active) {
 
 /* ---------- วันนี้ ---------- */
 function viewToday() {
+  if (isDesk()) return deskToday();
   const t = today();
   const log = logOf(t);
   const phase = !log ? 'before' : (log.type === 'leave' || log.out) ? 'done' : 'working';
@@ -103,6 +105,7 @@ function todoRow({ kind, ref }) {
 
 /* ---------- โปรเจกต์ ---------- */
 function viewProjects() {
+  if (isDesk()) return deskProjects();
   const active = db.projects.filter((p) => p.status !== 'archived');
   const count = (s) => active.filter((p) => p.status === s).length;
   const stats = [
@@ -149,6 +152,7 @@ function timelineCard(p) {
     <div class="between" style="font-size:13px;color:var(--on-dark-2)"><span>ระยะเวลา ${total} วัน</span><span>ผ่านมา ${passed} วัน</span><b style="color:${left < 0 ? 'var(--warn)' : 'var(--purple)'}">${left < 0 ? `เลยกำหนด ${-left} วัน` : left === 0 ? 'ส่งวันนี้' : `เหลือ ${left} วัน`}</b></div></div>`;
 }
 function viewProject(id) {
+  if (isDesk()) return deskProject(id);
   const p = byId('projects', id);
   if (!p) return `<div class="empty">ไม่พบโปรเจกต์นี้</div>`;
   const ts = tasksOf(id); const pr = progress(p); const t = today();
@@ -170,7 +174,7 @@ function viewProject(id) {
   const link = (icon, label, n, sub, href) => `<a class="tile" href="${href}"><span style="color:var(--purple-ink)">${ic(icon)}</span><b style="font-size:13px">${label} ${n}</b><span class="muted" style="font-size:11px">${esc(sub)}</span></a>`;
   const cats = (p.categories || []).map((c) => allCats()[c]?.label).join(' · ') || '-';
   return `
-  <header class="between"><a class="icon-btn" href="#/projects" aria-label="ย้อนกลับ">${ic('back')}</a>
+  <header class="between"><a class="icon-btn" href="#/projects" data-act="goBack" aria-label="ย้อนกลับ">${ic('back')}</a>
     <div class="row"><button class="icon-btn" data-act="openProject" data-id="${id}" aria-label="แก้ไขโปรเจกต์">${ic('edit')}</button>
     <button class="icon-btn solid" data-act="projectMenu" data-id="${id}" aria-label="เมนูเพิ่มเติม">${ic('more', 20, 3)}</button></div></header>
   <section class="card dark hero">
@@ -214,7 +218,7 @@ function viewArchive() {
     return `<button class="month" data-act="archiveMonth" data-y="${y}" data-m="${i}" style="background:${bg};color:${fg}"><b style="font-size:13px">${m}</b><span><b style="font-size:22px">${n}</b> <span style="font-size:11px">งาน</span></span></button>`;
   }).join('');
   return `
-  <header class="row" style="gap:12px"><a class="icon-btn" href="#/projects" aria-label="ย้อนกลับ">${ic('back')}</a><h1 class="h1" style="font-size:26px">Archive</h1></header>
+  <header class="row" style="gap:12px"><a class="icon-btn" href="#/projects" data-act="goBack" aria-label="ย้อนกลับ">${ic('back')}</a><h1 class="h1" style="font-size:26px">Archive</h1></header>
   <div class="timeline">${tl}</div>
   <div class="card dark grid3" style="padding:18px;border-radius:24px">
     <div><div style="font-size:26px;font-weight:700;line-height:1.2;color:var(--purple)">${sum.projects.length}</div><div style="font-size:12px;color:var(--on-dark-2)">โปรเจกต์ที่ปิด</div></div>
@@ -227,6 +231,7 @@ function viewArchive() {
 
 /* ---------- ปฏิทิน ---------- */
 function viewCalendar() {
+  if (isDesk()) return deskCalendar();
   const t = today();
   if (!ui.calMonth) ui.calMonth = t.slice(0, 7);
   if (!ui.calSel) ui.calSel = t;
@@ -281,6 +286,7 @@ function viewCalendar() {
 
 /* ---------- บันทึก ---------- */
 function viewRecords(tab) {
+  if (isDesk()) return deskRecords(tab);
   if (tab) ui.recTab = tab;
   const q = ui.recQuery.trim().toLowerCase();
   const T = { place: ['สถานที่', 'pin', db.places.length], person: ['คน', 'person', db.people.length], note: ['โน้ต', 'note', db.notes.length] };
@@ -333,6 +339,7 @@ const recRow = (href, badge, cls, title, sub, style = '') =>
   `<a class="lrow" href="${href}"><span class="av ${cls}" style="${style}">${badge}</span><span class="grow"><span class="t">${esc(title)}</span><span class="muted" style="font-size:12px">${esc(sub)}</span></span>${ic('right', 16, 2)}</a>`;
 
 function viewPlace(id) {
+  if (isDesk()) return deskPlace(id);
   const x = byId('places', id); if (!x) return `<div class="empty">ไม่พบสถานที่</div>`;
   const tr = trOf(x.transit);
   if ((x.visits || []).some((v) => !v.id)) { x.visits = x.visits.map((v) => (v.id ? v : { ...v, id: uid() })); save(); }
@@ -340,7 +347,7 @@ function viewPlace(id) {
   const steps = (x.steps || '').split('\n').filter(Boolean);
   const box = (icon, l, v) => v ? `<div class="tile"><span style="color:var(--purple-ink)">${ic(icon)}</span><span class="muted" style="font-size:12px">${l}</span><b>${esc(v)}</b></div>` : '';
   return `
-  <header class="between"><a class="icon-btn" href="#/records/place" aria-label="ย้อนกลับ">${ic('back')}</a>
+  <header class="between"><a class="icon-btn" href="#/records/place" data-act="goBack" aria-label="ย้อนกลับ">${ic('back')}</a>
     <div class="row"><button class="icon-btn" data-act="openPlace" data-id="${id}" aria-label="แก้ไขสถานที่">${ic('edit')}</button>
     ${x.mapUrl ? `<a class="icon-btn dark" href="${esc(x.mapUrl)}" target="_blank" rel="noopener" aria-label="เปิดในแผนที่">${ic('map')}</a>` : ''}</div></header>
   <div><div class="muted">สถานที่ · ไปมาแล้ว ${visits.length} ครั้ง${visits[0] ? ' · ล่าสุด ' + fmtShort(visits[0].date) : ''}</div>
@@ -365,11 +372,12 @@ function viewPlace(id) {
 }
 
 function viewPerson(id) {
+  if (isDesk()) return deskPerson(id);
   const x = byId('people', id); if (!x) return `<div class="empty">ไม่พบข้อมูล</div>`;
   const place = byId('places', x.placeId);
   const topics = (x.topics || '').split('\n').filter(Boolean);
   return `
-  <header class="between"><a class="icon-btn" href="#/records/person" aria-label="ย้อนกลับ">${ic('back')}</a>
+  <header class="between"><a class="icon-btn" href="#/records/person" data-act="goBack" aria-label="ย้อนกลับ">${ic('back')}</a>
     <button class="icon-btn" data-act="openPerson" data-id="${id}" aria-label="แก้ไขข้อมูลคน">${ic('edit')}</button></header>
   <section class="card purple hero">
     <div class="row" style="gap:14px"><span class="av" style="width:64px;height:64px;background:#2B2B2E;color:#C9A7F5;font-size:26px">${esc((x.name || '?').trim()[0])}</span>
@@ -408,6 +416,7 @@ function statsFor(kind, shift = 0) {
   };
 }
 function viewStats() {
+  if (isDesk()) return deskStats();
   const k = ui.statPeriod; const S = statsFor(k); const prev = statsFor(k, -1);
   const word = { week: 'สัปดาห์', month: 'เดือน', year: 'ปี' }[k]; const thisW = word + 'นี้';
   const n = k === 'year' ? 3 : 6;
@@ -440,6 +449,17 @@ function viewStats() {
 /* ---------- ตั้งค่า ---------- */
 /* มีอะไรใหม่ — ใส่เฉพาะฟีเจอร์/การเปลี่ยนแปลงใหญ่ (ไม่ต้องใส่การแก้คำ/ขนาด/สี) ใหม่สุดอยู่บน */
 const CHANGELOG = [
+  { ver: 'เวอร์ชัน 1.2', date: '25 พ.ย. 2569', items: [
+    'หน้าคอมรีดีไซน์ใหม่ทุกหน้า: เมนูซ้ายมีช่องค้นหาและตัวเลข · หัวหน้าและปุ่มหลักอยู่ที่เดิมทุกหน้า',
+    'วันนี้ (คอม): แถบ 7 วัน · กรองตามความสำคัญ · บอร์ดการ์ด + ตารางงานทั้งหมดที่พิมพ์เพิ่มได้ · คีย์ลัด N เพิ่มงาน / ค้นหา',
+    'โปรเจกต์ (คอม): ตารางเรียงได้ / บอร์ดลากเปลี่ยนสถานะ · หน้าโปรเจกต์มีเส้นเวลา + กราฟความคืบหน้างาน และตารางงานย่อย',
+    'ปฏิทิน (คอม): มุมมองเดือน / สัปดาห์ เต็มจอ · ลากงานเลื่อนวัน · รายละเอียดวันพร้อมเพิ่ม to-do',
+    'บันทึก (คอม): ตารางสถานที่ / คน · การ์ดโน้ต · แผนที่และจังหวัดแยกตามภาค · หน้าสถานที่และคนแบบใหม่',
+    'สถิติและตั้งค่า (คอม): ตัวเลขสรุปแถวเดียว · กราฟชั่วโมงทำงานพร้อมค่าเฉลี่ยและรายวัน · เลือกธีมในคลิกเดียว',
+    'to-do: เพิ่มหมวดใหม่ · สร้างโปรเจกต์ใหม่แบบละเอียด · กำหนดส่ง · ลิงก์ที่เกี่ยวข้อง',
+    'ปุ่มย้อนกลับพากลับไปหน้าที่เปิดก่อนหน้า',
+    'เปลี่ยนฟอนต์เป็น Bai Jamjuree',
+  ] },
   { ver: 'เวอร์ชัน 1.1', date: '30 ต.ค. 2569', items: [
     'หน้าคอม: เมนูด้านซ้าย · บอร์ดงานสลับดูแบบการ์ด / ตาราง / ปฏิทิน',
     'ซิงก์ข้ามเครื่อง: เข้าสู่ระบบในตั้งค่า ข้อมูลตรงกันทุกเครื่อง',
@@ -470,12 +490,13 @@ const CHANGELOG = [
   { ver: 'เวอร์ชัน 1.0', date: 'ต.ค. 2569', items: ['เปิดใช้ Rocket Life ครั้งแรก'] },
 ];
 function viewSettings() {
+  if (isDesk()) return deskSettings();
   const lb = db.settings.lastBackup;
   const stale = !lb || diffDays(lb.slice(0, 10), today()) > 7;
   const row = (icon, t, sub, right, act) => `<button class="lrow" style="border-radius:0;border-top:1px solid var(--line)" ${act ? `data-act="${act}"` : ''}><span class="av p2" style="width:36px;height:36px">${ic(icon, 18)}</span><span class="grow"><span class="t">${t}</span><span class="muted" style="font-size:12px">${sub}</span></span>${right || ic('right', 16, 2)}</button>`;
   const themeL = { system: 'ตามระบบ (สว่าง / มืด)', light: 'สว่าง', dark: 'มืด' }[db.settings.theme];
   return `
-  <header class="row" style="gap:12px"><a class="icon-btn" href="#/today" aria-label="ย้อนกลับ">${ic('back')}</a><h1 class="h1" style="font-size:26px">ตั้งค่า</h1></header>
+  <header class="row" style="gap:12px"><a class="icon-btn" href="#/today" data-act="goBack" aria-label="ย้อนกลับ">${ic('back')}</a><h1 class="h1" style="font-size:26px">ตั้งค่า</h1></header>
   <section class="card" style="padding:0;overflow:hidden">
     ${row('bell', 'มีอะไรใหม่', `${CHANGELOG[0].ver} · ${CHANGELOG[0].date}`, '', 'whatsNew')}
   </section>

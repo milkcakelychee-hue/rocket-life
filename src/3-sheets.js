@@ -30,7 +30,13 @@ function bindOpts(root) {
 }
 const fd = (form) => Object.fromEntries(new FormData(form).entries());
 // หมวดของ to-do (ใช้หมวดเดียวกับโปรเจกต์) แตะซ้ำ = ไม่เลือก
-const todoCatH = (cur) => `<div class="field"><span class="label">หมวด (ถ้ามี)</span><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px">${Object.entries(allCats()).map(([k, c]) => `<button type="button" class="opt ${k === cur ? 'on' : ''}" data-opt="cat" data-toggle="1" data-v="${k}">${ic(c.icon, 18, 2)}${esc(c.label)}</button>`).join('')}</div><input type="hidden" name="cat" value="${cur || ''}"></div>`;
+const todoCatTiles = (cur) => Object.entries(allCats()).map(([k, c]) => `<button type="button" class="opt ${k === cur ? 'on' : ''}" data-opt="cat" data-toggle="1" data-v="${k}">${ic(c.icon, 18, 2)}${esc(c.label)}</button>`).join('')
+  + `<button type="button" class="opt" style="border-style:dashed;justify-content:center" data-act="toggleAdd" data-box="tcat">${ic('plus', 18, 2)}เพิ่มหมวด</button>`;
+const todoCatH = (cur) => `<div class="field"><span class="label">หมวด (ถ้ามี)</span><div id="tcat-tiles" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px">${todoCatTiles(cur)}</div><input type="hidden" name="cat" value="${cur || ''}">
+  <div class="addbox" id="add-tcat" hidden>${inputH('newTCatName', '', 'text', 'ชื่อหมวด เช่น วิดีโอ, ประชุม')}
+    <span class="label">ไอคอน</span>${swatchH('newTCatIcon', PROJ_CAT_ICONS, 'folder', (i) => ic(i, 18, 2))}
+    <button type="button" class="btn" style="height:44px;font-size:15px" data-act="addTodoCat">เพิ่มหมวดนี้</button></div></div>`;
+const linkH = (val) => `<div class="field"><span class="label">ลิงก์ที่เกี่ยวข้อง (ถ้ามี)</span><div class="row" style="gap:8px">${inputH('link', val || '', 'url', 'https://')}${val ? `<a class="pill-btn" style="flex:none" href="${esc(val)}" target="_blank" rel="noopener">${ic('link', 16, 2)}เปิด</a>` : ''}</div></div>`;
 // ขยายเวลา (+1/+3/+7 วัน) หรือเลื่อนไม่มีกำหนด
 const extendH = (kind, id) => `<div class="field"><span class="label">ขยายเวลา</span><div class="row" style="gap:6px;flex-wrap:wrap">${[1, 3, 7].map((n) => `<button type="button" class="pill-btn" data-act="extend" data-kind="${kind}" data-id="${id}" data-n="${n}">+${n} วัน</button>`).join('')}<button type="button" class="pill-btn" data-act="holdItem" data-kind="${kind}" data-id="${id}">${ic('minus', 14, 2.2)}เลื่อนไม่มีกำหนด</button></div></div>`;
 const fieldH = (label, inner) => `<label class="field"><span class="label">${label}</span>${inner}</label>`;
@@ -105,8 +111,12 @@ function sheetTodo(id) {
     ${fieldH('ชื่องาน', inputH('title', x?.title || '', 'text', 'ต้องทำอะไร'))}
     <div class="field"><span class="label">ความสำคัญ</span>${optTiles('priority', Object.entries(PRIORITY).map(([k, v]) => [k, v.label, v.icon]), x?.priority || 4)}</div>
     ${todoCatH(x?.cat)}
-    ${fieldH('ผูกโปรเจกต์ (ถ้ามี)', `<select class="input" name="projectId"><option value="">— ไม่ผูกโปรเจกต์ —</option>${db.projects.filter((p) => !['done', 'archived'].includes(p.status)).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>`)}
-    ${fieldH('วันที่ทำ', inputH('date', x?.date || today(), 'date'))}
+    <div class="field"><span class="label">ผูกโปรเจกต์ (ถ้ามี)</span><select class="input" name="projectId"><option value="">— ไม่ผูกโปรเจกต์ —</option>${db.projects.filter((p) => !['done', 'archived'].includes(p.status)).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
+      <button type="button" class="pill-btn" style="align-self:flex-start" data-act="todoNewProject">${ic('plus', 16, 2)}สร้างโปรเจกต์ใหม่</button>
+      <div id="np-box" class="np-box" hidden><div class="between"><b>โปรเจกต์ใหม่</b><button type="button" class="link-btn" data-act="todoNewProject" data-off="1">ยกเลิก</button></div>
+        <input type="hidden" name="npOn" value="">${projectFieldsH(null, 'np')}</div></div>
+    <div class="grid2">${fieldH('วันที่ทำ', inputH('date', x?.date || today(), 'date'))}${fieldH('กำหนดส่ง (ถ้ามี)', inputH('due', x?.due || '', 'date'))}</div>
+    ${linkH(x?.link)}
     ${x ? extendH('todo', x.id) : ''}
     ${fieldH('โน้ต', areaH('note', x?.note || ''))}
     <button class="btn">บันทึก</button>${x ? `<button type="button" class="btn ghost" style="color:var(--warn-ink)" data-act="delItem" data-kind="todo" data-id="${x.id}">ลบ to-do นี้</button>` : ''}</form>`, bindOpts);
@@ -120,6 +130,7 @@ function sheetTask(id) {
     <div class="field"><span class="label">ความสำคัญ</span>${optTiles('priority', Object.entries(PRIORITY).map(([k, v]) => [k, v.label, v.icon]), x.priority || p?.priority || 4)}</div>
     ${todoCatH(x.cat)}
     <div class="grid2">${fieldH('วันที่ทำ', inputH('plannedFor', x.plannedFor || '', 'date'))}${fieldH('กำหนดส่ง', inputH('due', x.due || '', 'date'))}</div>
+    ${linkH(x.link)}
     ${extendH('task', id)}
     ${fieldH('โน้ต', areaH('note', x.note || ''))}
     <button class="btn">บันทึก</button><button type="button" class="btn ghost" style="color:var(--warn-ink)" data-act="delItem" data-kind="task" data-id="${id}">ลบงานย่อยนี้</button></form>`, bindOpts);
@@ -128,22 +139,27 @@ function sheetTask(id) {
 /* ---------- โปรเจกต์ ---------- */
 const projCatsH = (cats) => Object.entries(allCats()).map(([k, v]) => `<label class="opt" style="height:56px;font-size:14px;font-weight:600"><span style="color:var(--purple-ink)">${ic(v.icon, 20)}</span><span style="flex:1">${esc(v.label)}</span><input type="checkbox" name="cat_${k}" ${cats.includes(k) ? 'checked' : ''} style="width:22px;height:22px;accent-color:#2B2B2E"></label>`).join('')
   + `<button type="button" class="opt" data-act="toggleAdd" data-box="pcat" style="height:56px;font-size:14px;font-weight:600;border-style:dashed;justify-content:center">${ic('plus', 18, 2)}เพิ่มหมวด</button>`;
-function sheetProject(id) {
-  const p = id ? byId('projects', id) : null;
+// ช่องกรอกโปรเจกต์ ใช้ทั้งฟอร์มโปรเจกต์ และ "สร้างโปรเจกต์ใหม่" ในฟอร์ม to-do (pre = คำนำหน้าชื่อช่อง)
+function projectFieldsH(p, pre) {
+  const n = (k) => pre ? pre + k[0].toUpperCase() + k.slice(1) : k;
   const cats = p?.categories || ['infographic'];
   const stTone = { todo: 'var(--card-2)', doing: 'var(--purple)', waiting: 'var(--amber-soft)', revise: 'var(--warn-soft)' };
   const prTone = { 1: 'var(--warn-soft)', 2: 'var(--purple-soft)', 3: 'var(--amber-soft)', 4: 'var(--card-2)' };
-  openSheet(p ? 'แก้ไขโปรเจกต์' : 'โปรเจกต์ใหม่', `<form class="stack" style="gap:14px" data-form="project" data-id="${id || ''}">
-    ${fieldH('ชื่อโปรเจกต์', inputH('name', p?.name || '', 'text'))}
-    ${fieldH('คำอธิบาย (ถ้ามี)', areaH('desc', p?.desc || ''))}
-    <div class="field"><span class="label">สถานะ</span>${optTiles('status', ['todo', 'doing', 'waiting', 'revise'].map((k) => [k, STATUS[k].label, STATUS[k].icon, stTone[k]]), ['done', 'archived'].includes(p?.status) ? '' : (p?.status || 'todo'))}</div>
-    <div class="field"><span class="label">ความสำคัญ</span>${optTiles('priority', Object.entries(PRIORITY).map(([k, v]) => [k, v.label, v.icon, prTone[k]]), p?.priority || 2)}</div>
-    <div class="grid2">${fieldH('วันเริ่ม', inputH('start', p?.start || today(), 'date'))}${fieldH('กำหนดส่ง', inputH('due', p?.due || '', 'date'))}</div>
+  return `${fieldH('ชื่อโปรเจกต์', inputH(n('name'), p?.name || '', 'text'))}
+    ${fieldH('คำอธิบาย (ถ้ามี)', areaH(n('desc'), p?.desc || ''))}
+    <div class="field"><span class="label">สถานะ</span>${optTiles(n('status'), ['todo', 'doing', 'waiting', 'revise'].map((k) => [k, STATUS[k].label, STATUS[k].icon, stTone[k]]), ['done', 'archived'].includes(p?.status) ? '' : (p?.status || (pre ? 'doing' : 'todo')))}</div>
+    <div class="field"><span class="label">ความสำคัญ</span>${optTiles(n('priority'), Object.entries(PRIORITY).map(([k, v]) => [k, v.label, v.icon, prTone[k]]), p?.priority || 2)}</div>
+    <div class="grid2">${fieldH('วันเริ่ม', inputH(n('start'), p?.start || today(), 'date'))}${fieldH('กำหนดส่ง', inputH(n('due'), p?.due || '', 'date'))}</div>
     <div class="field"><div class="between"><span class="label">หมวด</span><span class="muted" style="font-size:12px">เลือกได้หลายหมวด</span></div>
       <div class="grid2" id="pcat-tiles">${projCatsH(cats)}</div>
       <div class="addbox" id="add-pcat" hidden>${inputH('newPCatName', '', 'text', 'ชื่อหมวด เช่น วิดีโอ, พอดแคสต์')}
         <span class="label">ไอคอน</span>${swatchH('newPCatIcon', PROJ_CAT_ICONS, 'folder', (i) => ic(i, 18, 2))}
-        <button type="button" class="btn" style="height:44px;font-size:15px" data-act="addProjCat">เพิ่มหมวดนี้</button></div></div>
+        <button type="button" class="btn" style="height:44px;font-size:15px" data-act="addProjCat">เพิ่มหมวดนี้</button></div></div>`;
+}
+function sheetProject(id) {
+  const p = id ? byId('projects', id) : null;
+  openSheet(p ? 'แก้ไขโปรเจกต์' : 'โปรเจกต์ใหม่', `<form class="stack" style="gap:14px" data-form="project" data-id="${id || ''}">
+    ${projectFieldsH(p, '')}
     <button class="btn">${p ? 'บันทึก' : 'สร้างโปรเจกต์'}</button></form>`, bindOpts);
 }
 function sheetProjectMenu(id) {
@@ -289,6 +305,8 @@ const ACT = {
   openTodo: () => sheetTodo(),
   openAlerts: () => sheetAlerts(),
   openProject: (el) => sheetProject(el.dataset.id),
+  // ย้อนกลับ = กลับไปหน้าที่เปิดก่อนหน้าในแอป · ถ้าเพิ่งเปิดแอปมาที่หน้านี้ ไปหน้าหลักของส่วนนั้นแทน
+  goBack: (el) => { if (navDepth > 0) { navBack = true; history.back(); } else location.hash = el.getAttribute('href'); },
   projectMenu: (el) => sheetProjectMenu(el.dataset.id),
   openAppt: (el) => sheetAppt(el.dataset.id, el.dataset.k),
   addRecord: () => sheetAddRecord(),
@@ -377,6 +395,13 @@ const ACT = {
     $$('[data-kind]', sh).forEach((el) => { el.hidden = !el.dataset.kind.split(' ').includes('bus'); });
     $('[name=newTrName]', sh).value = ''; $('#add-tr', sh).hidden = true; toast('เพิ่มวิธีไปแล้ว');
   },
+  addTodoCat: () => {
+    const sh = $('.sheet'); const label = $('[name=newTCatName]', sh).value.trim(); if (!label) { toast('ตั้งชื่อหมวดก่อนนะ'); return; }
+    const c = { key: 'c_' + uid(), label, icon: $('[name=newTCatIcon]', sh).value || 'folder' };
+    (db.settings.projCats = db.settings.projCats || []).push(c); save();
+    $('#tcat-tiles', sh).innerHTML = todoCatTiles(c.key); $('[name=cat]', sh).value = c.key;
+    $('[name=newTCatName]', sh).value = ''; $('#add-tcat', sh).hidden = true; toast('เพิ่มหมวดแล้ว');
+  },
   addProjCat: () => {
     const sh = $('.sheet'); const label = $('[name=newPCatName]', sh).value.trim(); if (!label) { toast('ตั้งชื่อหมวดก่อนนะ'); return; }
     const c = { key: 'c_' + uid(), label, icon: $('[name=newPCatIcon]', sh).value || 'folder' };
@@ -392,6 +417,11 @@ const ACT = {
   },
   addVisit: (el) => sheetVisit(el.dataset.id),
   editVisit: (el) => sheetVisit(el.dataset.place, el.dataset.id),
+  todoNewProject: (el) => {
+    const sh = $('.sheet'), b = $('#np-box', sh), on = !el.dataset.off;
+    b.hidden = !on; $('[name=npOn]', sh).value = on ? '1' : ''; $('[data-act=todoNewProject]:not([data-off])', sh).hidden = on;
+    $('[name=projectId]', sh).disabled = on; if (on) $('[name=npName]', sh).focus();
+  },
   visitNewProject: (el) => { const b = $('#newproj-box'); b.hidden = false; $('input', b).focus(); el.hidden = true; },
   delVisit: (el) => {
     if (!confirm('ลบรายการนี้?')) return;
@@ -441,18 +471,24 @@ const FORM = {
   },
   checkout: (f, v) => { const l = logOf(today()); Object.assign(l, { in: v.in, out: v.out, mood: v.mood === '' ? null : Number(v.mood), note: v.note }); toast('เลิกงานแล้ว พักผ่อนให้เต็มที่นะ'); },
   todo: (f, v) => {
-    const id = f.dataset.id; const data = { title: v.title.trim(), priority: Number(v.priority), date: v.date || today(), note: v.note, cat: v.cat || null, hold: false };
+    const id = f.dataset.id; const data = { title: v.title.trim(), priority: Number(v.priority), date: v.date || today(), due: v.due || null, link: (v.link || '').trim(), note: v.note, cat: v.cat || null, hold: false };
     if (!data.title) return false;
+    if (v.npOn) {
+      if (!(v.npName || '').trim()) { toast('ตั้งชื่อโปรเจกต์ใหม่ก่อนนะ'); return 'keep'; }
+      const np = { id: uid(), name: v.npName.trim(), desc: v.npDesc, status: v.npStatus || 'doing', priority: Number(v.npPriority) || 2, start: v.npStart || today(), due: v.npDue || null,
+        categories: Object.keys(allCats()).filter((k) => v['cat_' + k]), createdAt: today() };
+      db.projects.push(np); v.projectId = np.id;
+    }
     // ผูกโปรเจกต์ = ย้ายไปเป็นงานย่อยของโปรเจกต์นั้น (ยังอยู่ใน to-do วันที่เลือก)
     if (v.projectId) {
       const old = id && byId('todos', id);
-      db.tasks.push({ id: id || uid(), projectId: v.projectId, title: data.title, priority: data.priority, cat: data.cat, note: data.note, done: !!old?.done, doneAt: old?.doneAt || null, order: tasksOf(v.projectId).length, plannedFor: data.date });
+      db.tasks.push({ id: id || uid(), projectId: v.projectId, title: data.title, priority: data.priority, cat: data.cat, note: data.note, due: data.due, link: data.link, done: !!old?.done, doneAt: old?.doneAt || null, order: tasksOf(v.projectId).length, plannedFor: data.date });
       if (id) db.todos = db.todos.filter((y) => y.id !== id);
       return;
     }
     if (id) Object.assign(byId('todos', id), data); else db.todos.push({ id: uid(), done: false, ...data });
   },
-  task: (f, v) => { Object.assign(byId('tasks', f.dataset.id), { title: v.title.trim(), priority: Number(v.priority), plannedFor: v.plannedFor || null, due: v.due || null, note: v.note, cat: v.cat || null }); },
+  task: (f, v) => { Object.assign(byId('tasks', f.dataset.id), { title: v.title.trim(), priority: Number(v.priority), plannedFor: v.plannedFor || null, due: v.due || null, link: (v.link || '').trim(), note: v.note, cat: v.cat || null }); },
   addTask: (f, v) => {
     const title = (v.title || '').trim(); if (!title) return false;
     db.tasks.push({ id: uid(), projectId: f.dataset.id, title, done: false, order: tasksOf(f.dataset.id).length, plannedFor: null });
@@ -536,6 +572,8 @@ function bindDrag() {
 }
 
 /* ---------- เราเตอร์ ---------- */
+var navDepth = 0, navBack = false;
+window.addEventListener('hashchange', () => { if (navBack) { navDepth = Math.max(0, navDepth - 1); navBack = false; } else navDepth++; });
 function render() {
   const [, route = 'today', arg] = (location.hash || '#/today').split('/');
   const V = {
@@ -562,7 +600,9 @@ document.addEventListener('submit', (e) => {
   const f = e.target.closest('form[data-form]'); if (!f) return;
   e.preventDefault();
   const v = fd(f);
-  if (FORM[f.dataset.form](f, v) === false) { toast('กรอกชื่อก่อนนะ'); return; }
+  const res = FORM[f.dataset.form](f, v);
+  if (res === false) { toast('กรอกชื่อก่อนนะ'); return; }
+  if (res === 'keep') return;
   save(); if (f.closest('.sheet')) closeSheet(); render();
 });
 document.addEventListener('input', (e) => { if (e.target.id === 'recq') { ui.recQuery = e.target.value; render(); } });
