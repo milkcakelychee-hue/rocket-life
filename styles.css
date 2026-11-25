@@ -333,7 +333,7 @@ textarea.input { height: 80px; padding: 12px 16px; resize: none; }
 
   /* --- รีดีไซน์คอม รอบ 1: เมนูซ้าย + หน้าวันนี้ --- */
   #tabbar { width: 224px; padding: 20px 12px; gap: 2px; background: var(--card); }
-  #view { margin-left: 224px; max-width: 1320px; padding: 28px 32px 60px; }
+  #view { margin-left: 224px; max-width: none; padding: 28px 40px 60px; }
   .sb-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; padding: 0 8px 16px; }
   .sb-logo { width: 30px; height: 30px; border-radius: 9px; background: var(--purple); color: #1E1E20; display: flex; align-items: center; justify-content: center; }
   .sb-search { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink-3); background: var(--bg); }
@@ -732,3 +732,7 @@ textarea.input { height: 80px; padding: 12px 16px; resize: none; }
   .snews ul { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--ink-2); }
 }
 @media (min-width: 1024px) { .srow .grow { flex: 1; } }
+@media (min-width: 1600px) {
+  .dgrid { grid-template-columns: minmax(0, 1fr) 360px; }
+  .rgrid { grid-template-columns: 480px minmax(0, 1fr); }
+}
