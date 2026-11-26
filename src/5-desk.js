@@ -642,6 +642,21 @@ function deskPerson(id) {
   </div>`;
 }
 /* ---------- สถิติบนคอม ---------- */
+// งานย่อย / to-do ที่ปิดได้ แยกตามหมวด (ใช้หมวดของงาน ถ้าไม่มีใช้หมวดแรกของโปรเจกต์)
+function statCats(S, thisW) {
+  var g = {}, cats = allCats();
+  S.doneTasks.forEach((x) => {
+    var pj = x.projectId ? byId('projects', x.projectId) : null;
+    var k = x.cat || (pj && (pj.categories || [])[0]) || '_none';
+    g[k] = (g[k] || 0) + 1;
+  });
+  var rows = Object.entries(g).sort((a, b) => b[1] - a[1]);
+  var max = Math.max(1, ...rows.map((r) => r[1]));
+  return `<section class="dpanel"><div class="dcard-h"><h2>งานที่ปิด${thisW} แยกตามหมวด</h2><span class="muted">${S.doneTasks.length} ชิ้น</span></div>
+    ${rows.map(([k, n]) => { var c = cats[k];
+      return `<div class="scat-row"><span class="scat-l">${c ? ic(c.icon, 14, 2) : ic('minus', 14, 2)}<span>${c ? esc(c.label) : 'ไม่มีหมวด'}</span></span>
+        <span class="scat-t"><i style="width:${Math.round(n / max * 100)}%"></i></span><b>${n} ชิ้น</b></div>`; }).join('') || '<div class="side-empty">ยังไม่มีงานที่ปิด</div>'}</section>`;
+}
 function deskStats() {
   var k = ui.statPeriod || 'week', S = statsFor(k), prev = statsFor(k, -1);
   var word = { week: 'สัปดาห์', month: 'เดือน', year: 'ปี' }[k], thisW = word + 'นี้';
@@ -676,6 +691,7 @@ function deskStats() {
   <div class="dgrid">
     <div class="dmain"><section class="dpanel"><div class="dcard-h"><h2>ชั่วโมงทำงาน ${n} ${word}ล่าสุด</h2><span class="muted">เส้นประ = เฉลี่ย ${(avg / 60).toFixed(1)} ชม.</span></div>
       <div class="schart" style="grid-template-columns:repeat(${n},minmax(0,1fr))"><div class="savgbox"><span class="savg" style="bottom:${Math.round(avg / max * 100)}%"><em>เฉลี่ย</em></span></div>${bars}</div>${daily}</section>
+      ${statCats(S, thisW)}
       <section class="dpanel"><div class="dcard-h"><h2>โปรเจกต์ที่ปิด${thisW}</h2><span class="muted">${S.closed.length}</span></div>
         ${S.closed.map((p) => `<a class="side-row" href="#/project/${p.id}"><span class="side-ic">${ic('check', 16, 2)}</span><span class="grow" style="min-width:0"><b>${esc(p.name)}</b></span><span class="muted" style="font-size:13px">${p.doneAt ? fmtShort(p.doneAt) : ''}</span></a>`).join('') || '<div class="side-empty">ยังไม่มีโปรเจกต์ที่ปิด</div>'}</section>
       ${k === 'year' ? `<a class="dpanel row" href="#/archive" style="justify-content:space-between;text-decoration:none;color:inherit"><b>${ic('box', 16, 2)} ดู Archive ทั้งปี</b>${ic('right', 16, 2)}</a>` : ''}
