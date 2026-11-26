@@ -642,21 +642,26 @@ function deskPerson(id) {
   </div>`;
 }
 /* ---------- สถิติบนคอม ---------- */
-// งานย่อย / to-do ที่ปิดได้ แยกตามหมวด (ใช้หมวดของงาน ถ้าไม่มีใช้หมวดแรกของโปรเจกต์)
+// งานย่อย / to-do ที่ปิดได้ แยกตามหมวด (ใช้หมวดของงาน ถ้าไม่มีใช้หมวดแรกของโปรเจกต์) · ใช้ทั้งคอมและมือถือ
+function doneCatOf(x) { var pj = x.projectId ? byId('projects', x.projectId) : null; return x.cat || (pj && (pj.categories || [])[0]) || '_none'; }
 function statCats(S, thisW) {
   var g = {}, cats = allCats();
-  S.doneTasks.forEach((x) => {
-    var pj = x.projectId ? byId('projects', x.projectId) : null;
-    var k = x.cat || (pj && (pj.categories || [])[0]) || '_none';
-    g[k] = (g[k] || 0) + 1;
-  });
+  S.doneTasks.forEach((x) => { var k = doneCatOf(x); g[k] = (g[k] || 0) + 1; });
   var rows = Object.entries(g).sort((a, b) => b[1] - a[1]);
   var max = Math.max(1, ...rows.map((r) => r[1]));
-  return `<section class="dpanel"><div class="dcard-h"><h2>งานที่ปิด${thisW} แยกตามหมวด</h2><span class="muted">${S.doneTasks.length} ชิ้น</span></div>
+  return `<section class="dpanel card scat"><div class="dcard-h"><h2>งานที่ปิด${thisW} แยกตามหมวด</h2><span class="muted">${S.doneTasks.length} ชิ้น</span></div>
     ${rows.map(([k, n]) => { var c = cats[k];
-      return `<div class="scat-row"><span class="scat-l">${c ? ic(c.icon, 14, 2) : ic('minus', 14, 2)}<span>${c ? esc(c.label) : 'ไม่มีหมวด'}</span></span>
-        <span class="scat-t"><i style="width:${Math.round(n / max * 100)}%"></i></span><b>${n} ชิ้น</b></div>`; }).join('') || '<div class="side-empty">ยังไม่มีงานที่ปิด</div>'}</section>`;
+      return `<button class="scat-row" data-act="catDetail" data-k="${esc(k)}"><span class="scat-l">${c ? ic(c.icon, 14, 2) : ic('minus', 14, 2)}<span>${c ? esc(c.label) : 'ไม่มีหมวด'}</span></span>
+        <span class="scat-t"><i style="width:${Math.round(n / max * 100)}%"></i></span><b>${n} ชิ้น</b>${ic('right', 14, 2)}</button>`; }).join('') || '<div class="side-empty">ยังไม่มีงานที่ปิด</div>'}</section>`;
 }
+Object.assign(ACT, {
+  catDetail: (el) => {
+    var k = el.dataset.k, S = statsFor(ui.statPeriod || 'week'), c = allCats()[k];
+    var list = S.doneTasks.filter((x) => doneCatOf(x) === k).sort((a, b) => (b.doneAt || '').localeCompare(a.doneAt || ''));
+    openSheet(`${c ? c.label : 'ไม่มีหมวด'} · ${list.length} ชิ้น`, `<div class="muted" style="font-size:13px;margin:-4px 0 8px">ปิดในช่วง ${S.label}</div><div class="stack" style="gap:0">${list.map((x) => { var pj = x.projectId ? byId('projects', x.projectId) : null;
+      return `<div class="lrow" style="border-radius:0;border-top:1px solid var(--line);background:transparent"><span class="av p2" style="width:36px;height:36px">${ic('check', 16, 2.4)}</span><span class="grow"><span class="t">${esc(x.title)}</span><span class="muted" style="font-size:12px">${pj ? esc(pj.name) : 'to-do ลอย'}${x.doneAt ? ' · เสร็จ ' + fmtShort(x.doneAt) : ''}</span></span>${pj ? `<a class="pill-btn" href="#/project/${pj.id}" data-act="closeSheet">โปรเจกต์</a>` : ''}</div>`; }).join('') || '<div class="empty">ไม่มีงาน</div>'}</div>`);
+  },
+});
 function deskStats() {
   var k = ui.statPeriod || 'week', S = statsFor(k), prev = statsFor(k, -1);
   var word = { week: 'สัปดาห์', month: 'เดือน', year: 'ปี' }[k], thisW = word + 'นี้';

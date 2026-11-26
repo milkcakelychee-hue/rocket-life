@@ -737,12 +737,18 @@ textarea.input { height: 80px; padding: 12px 16px; resize: none; }
   .rgrid { grid-template-columns: 480px minmax(0, 1fr); }
 }
 @media (min-width: 1024px) {
-  .scat-row { display: grid; grid-template-columns: 180px minmax(0, 1fr) 64px; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
-  .dcard-h + .scat-row { border-top: none; }
-  .scat-l { display: flex; align-items: center; gap: 8px; font-size: 14px; min-width: 0; color: var(--ink); }
-  .scat-l svg { color: var(--purple-ink); flex: none; }
-  .scat-l span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .scat-t { height: 14px; border-radius: 6px; background: var(--card-2); overflow: hidden; }
-  .scat-t i { display: block; height: 100%; border-radius: 6px; background: var(--purple); }
-  .scat-row b { font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
 }
+/* งานที่ปิดแยกตามหมวด (มือถือ + คอม) */
+.scat .dcard-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.scat .dcard-h h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.scat-row { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto 14px; gap: 10px; align-items: center; padding: 10px 0; border: none; border-top: 1px solid var(--line); background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.dcard-h + .scat-row { border-top: none; }
+.scat-row:hover { background: var(--bg); }
+.scat-row > svg { color: var(--ink-3); }
+.scat-l { display: flex; align-items: center; gap: 8px; font-size: 14px; min-width: 0; color: var(--ink); }
+.scat-l svg { color: var(--purple-ink); flex: none; }
+.scat-l span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scat-t { height: 12px; border-radius: 6px; background: var(--card-2); overflow: hidden; }
+.scat-t i { display: block; height: 100%; border-radius: 6px; background: var(--purple); }
+.scat-row b { font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (min-width: 1024px) { .scat-row { grid-template-columns: 200px minmax(0, 1fr) 64px 14px; } }

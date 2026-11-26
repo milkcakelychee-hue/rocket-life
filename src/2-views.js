@@ -440,6 +440,7 @@ function viewStats() {
   <div class="card stack"><b>วันที่ใช้ไป${thisW}</b>
     <div class="grid3">${[['leave', 'ลา', S.leave.length], ['cal', 'หยุด', S.off.length], ['plus', 'ป่วย', S.sick.length]].map(([i, l, v]) => `<div style="padding:12px;border-radius:16px;background:var(--bg)"><div class="row muted" style="gap:4px;font-size:12px">${ic(i, 14, 2)}${l}</div><b style="font-size:22px">${v}</b> <span class="muted" style="font-size:12px">วัน</span></div>`).join('')}</div>
     ${sickList || `<div class="muted">ไม่มีวันป่วย${thisW}</div>`}</div>
+  ${statCats(S, thisW)}
   <div class="card stack"><b>ความรู้สึก${thisW}</b>
     <div style="display:flex;height:14px;border-radius:999px;overflow:hidden;background:var(--card-2)">${S.moods.map((m, i) => `<div style="width:${m / totalMood * 100}%;background:${MOODS[i].color}"></div>`).join('')}</div>
     <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;text-align:center">${MOODS.map((m, i) => `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">${flower(m.color, 20, 'var(--card)')}<b>${S.moods[i]}</b><span style="font-size:10px;color:var(--ink-2);line-height:1.3">${m.label.split(' ')[0]}</span></div>`).join('')}</div></div>
@@ -450,7 +451,7 @@ function viewStats() {
 /* มีอะไรใหม่ — ใส่เฉพาะฟีเจอร์/การเปลี่ยนแปลงใหญ่ (ไม่ต้องใส่การแก้คำ/ขนาด/สี) ใหม่สุดอยู่บน */
 const CHANGELOG = [
   { ver: 'เวอร์ชัน 1.3', date: '26 พ.ย. 2569', items: [
-    'สถิติ (คอม): งานที่ปิดแยกตามหมวด เช่น อินโฟกราฟิกทำไปกี่ชิ้น',
+    'สถิติ: งานที่ปิดแยกตามหมวด เช่น อินโฟกราฟิกทำไปกี่ชิ้น · ใช้ได้ทั้งมือถือและคอม · กดหมวดเพื่อดูรายการงาน',
   ] },
   { ver: 'เวอร์ชัน 1.2', date: '25 พ.ย. 2569', items: [
     'หน้าคอมรีดีไซน์ใหม่ทุกหน้า: เมนูซ้ายมีช่องค้นหาและตัวเลข · หัวหน้าและปุ่มหลักอยู่ที่เดิมทุกหน้า',
