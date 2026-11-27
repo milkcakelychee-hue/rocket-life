@@ -164,10 +164,13 @@ function deskTable(t) {
   return `<section class="dpanel dtable">
     <div class="dcard-h"><h2>งานทั้งหมด</h2><span class="muted">${items.length} งานที่ยังไม่เสร็จ</span></div>
 
+    ${rows ? '<div class="trow thead"><span></span><span>งาน</span><span>โปรเจกต์</span><span>ความสำคัญ</span><span>วันที่ทำ</span></div>' : ''}
     <div class="trows">${rows || '<div class="side-empty">ยังไม่มีงาน</div>'}</div>
     <form class="qadd" id="qadd">${ic('plus', 16, 2.2)}<input name="title" id="qadd-t" placeholder="พิมพ์งานใหม่ แล้วกด Enter" autocomplete="off" aria-label="ชื่องานใหม่">
-      ${priSel(4, 'name="priority" aria-label="ความสำคัญ"')}<input class="input tsel" type="date" name="date" value="${ui.qaddDate || t}" aria-label="วันที่ทำ"><button class="btn-d" type="submit">เพิ่ม</button></form></section>`;
+      ${qf('ความสำคัญ', priSel(4, 'name="priority" aria-label="ความสำคัญ"'))}${qf('วันที่ทำ', `<input class="input tsel" type="date" name="date" value="${ui.qaddDate || t}" aria-label="วันที่ทำ">`)}<button class="btn-d" type="submit">เพิ่ม</button></form></section>`;
 }
+// กล่องในแถวเพิ่มงาน มีหัวเล็ก ๆ บอกว่าเป็นช่องอะไร
+function qf(label, inner) { return `<label class="qf"><span>${label}</span>${inner}</label>`; }
 function deskQReset() { var r = (location.hash || '#/today').split('/')[1] || 'today'; if (ui.qRoute !== r) { ui.deskQ = ''; ui.qRoute = r; } }
 function deskToday() {
   deskQReset();
@@ -384,11 +387,11 @@ function deskProject(id) {
   <div class="dgrid">
     <div class="dmain">
       <section class="dpanel"><div class="dcard-h"><h2>งานย่อย <span class="muted" style="font-weight:400">${dn}/${ts.length}</span></h2><span class="muted">ลากการ์ดข้ามคอลัมน์เพื่อเปลี่ยนสถานะ</span></div>${boardCards(id)}</section>
-      <section class="dpanel dtable"><div class="dcard-h"><h2>รายการงานย่อย</h2><span class="muted">แก้ความสำคัญ วันที่ทำ และกำหนดส่งได้ในตาราง</span></div>
+      <section class="dpanel dtable"><div class="dcard-h"><h2>รายการงานย่อย</h2><span class="row" style="gap:12px"><span class="muted">แก้ความสำคัญ วันที่ทำ และกำหนดส่งได้ในตาราง</span>${floatTodos().length ? `<button class="btn-o" data-act="pullTodos" data-id="${id}">${ic('down', 16, 2)}ดึงจาก to-do ลอย <b>${floatTodos().length}</b></button>` : ''}</span></div>
         ${ts.length ? `<div class="trow strow thead"><span></span><span>งาน</span><span>ความสำคัญ</span><span>วันที่ทำ</span><span>กำหนดส่ง</span><span></span></div>` : ''}
         <div class="trows">${rows || '<div class="side-empty">ยังไม่มีงานย่อย พิมพ์ด้านล่างเพื่อเพิ่ม</div>'}</div>
         <form class="qadd" id="tadd" data-pid="${id}">${ic('plus', 16, 2.2)}<input name="title" id="tadd-t" placeholder="พิมพ์งานย่อยใหม่ แล้วกด Enter" autocomplete="off" aria-label="ชื่องานย่อยใหม่">
-          ${priSel(p.priority || 4, 'name="priority" aria-label="ความสำคัญ"')}<input class="input tsel" type="date" name="plannedFor" aria-label="วันที่ทำ" title="วันที่ทำ"><input class="input tsel" type="date" name="due" aria-label="กำหนดส่ง" title="กำหนดส่ง"><button class="btn-d" type="submit">เพิ่ม</button></form></section>
+          ${qf('ความสำคัญ', priSel(p.priority || 4, 'name="priority" aria-label="ความสำคัญ"'))}${qf('วันที่ทำ', '<input class="input tsel" type="date" name="plannedFor" aria-label="วันที่ทำ">')}${qf('กำหนดส่ง', '<input class="input tsel" type="date" name="due" aria-label="กำหนดส่ง">')}<button class="btn-d" type="submit">เพิ่ม</button></form></section>
     </div>
     <aside class="dside">
       <section class="dcard"><div class="dcard-h"><h2>รายละเอียด</h2></div>
@@ -757,3 +760,36 @@ Object.assign(ACT, {
 });
 if (document.getElementById('view')) bindOpts(document.getElementById('view'));
 render();
+
+/* ---------- ดึง to-do ลอยเข้าเป็นงานย่อยของโปรเจกต์ (ใช้ทั้งคอมและมือถือ) ---------- */
+function floatTodos() { return db.todos.filter((x) => !x.done); }
+function sheetPullTodos(pid) {
+  var p = byId('projects', pid); if (!p) return;
+  var list = floatTodos();
+  openSheet('ดึงจาก to-do ลอย', `<div class="muted" style="margin-top:-10px">เลือก to-do ที่จะย้ายเข้าเป็นงานย่อยของ "${esc(p.name)}"</div>
+    <div class="stack" style="gap:8px">${list.map((x) => `<button type="button" class="opt" data-pick="${x.id}" style="font-size:15px;padding:10px 14px;justify-content:flex-start;text-align:left" aria-pressed="false"><span class="tick" style="width:26px;height:26px;flex:none"></span><span class="grow">${esc(x.title)}<br><span class="muted" style="font-size:12px">${x.hold ? 'เลื่อนไว้ไม่มีกำหนด' : x.date ? 'วันที่ทำ ' + fmtShort(x.date) : ''}</span></span></button>`).join('')}</div>
+    <button class="btn" data-act="pullTodosConfirm" data-id="${pid}" id="pull-btn" disabled>เลือก to-do ที่จะดึงเข้า</button>`, (sh) => {
+    var sel = new Set();
+    sh.addEventListener('click', (e) => {
+      var b = e.target.closest('[data-pick]'); if (!b) return;
+      var id = b.dataset.pick, on = !sel.has(id); on ? sel.add(id) : sel.delete(id);
+      b.setAttribute('aria-pressed', on); b.style.background = on ? 'var(--purple-soft)' : '';
+      $('.tick', b).classList.toggle('on', on); $('.tick', b).innerHTML = on ? ic('check', 14, 2.6) : '';
+      var btn = $('#pull-btn', sh); btn.disabled = !sel.size; btn.textContent = sel.size ? `ดึง ${sel.size} งานเข้าโปรเจกต์` : 'เลือก to-do ที่จะดึงเข้า';
+    });
+    sh._sel = sel;
+  });
+}
+Object.assign(ACT, {
+  pullTodos: (el) => sheetPullTodos(el.dataset.id),
+  pullTodosConfirm: (el) => {
+    var sel = $('.sheet')._sel, pid = el.dataset.id; if (!sel?.size) return;
+    // ย้ายเป็นงานย่อย: วันที่ทำเดิมยังอยู่ (ยังอยู่ใน to-do วันนั้น) · ที่เลื่อนไม่มีกำหนดจะไม่มีวันที่ทำ
+    sel.forEach((id) => {
+      var x = byId('todos', id); if (!x) return;
+      db.tasks.push({ id: x.id, projectId: pid, title: x.title, priority: x.priority || null, cat: x.cat || null, note: x.note || '', link: x.link || '', due: x.due || null, done: false, wait: null, order: tasksOf(pid).length, plannedFor: x.hold ? null : x.date || null });
+    });
+    db.todos = db.todos.filter((x) => !sel.has(x.id));
+    var n = sel.size; save(); closeSheet(); render(); toast(`ดึง ${n} งานเข้าโปรเจกต์แล้ว`);
+  },
+});

@@ -188,6 +188,7 @@ function viewProject(id) {
   <div class="between"><h2 class="h2">งานย่อย <span style="color:var(--purple-ink)">${ts.filter((x) => x.done).length}/${ts.length}</span></h2>${ts.length > 1 && !isDesk() ? `<button class="pill-btn ${ui.sortMode ? 'on' : ''}" data-act="sortMode">${ui.sortMode ? 'เสร็จสิ้น' : 'จัดลำดับ'}</button>` : ''}</div>
   ${ui.sortMode ? '' : `<form class="search" data-form="addTask" data-id="${id}" style="border-radius:20px;padding-right:6px">${ic('plus', 18, 2)}<input name="title" placeholder="เพิ่มงานย่อย" aria-label="เพิ่มงานย่อย" autocomplete="off"><button class="pill-btn" style="background:var(--dark);color:var(--on-dark);border:none;height:40px">บันทึก</button></form>`}
   ${ts.length && !ui.sortMode && !isDesk() ? '<div class="muted" style="font-size:12px;margin-top:-8px">ปัดงานย่อยไปทางซ้าย เพื่อใส่ to-do วันนี้ · แก้ไข · ลบ</div>' : ''}
+  ${!isDesk() && !ui.sortMode && floatTodos().length ? `<button class="pill-btn" style="align-self:flex-start" data-act="pullTodos" data-id="${id}">${ic('down', 16, 2)}ดึงจาก to-do ลอย (${floatTodos().length})</button>` : ''}
   ${isDesk() ? deskBoard(id) : `<div class="stack">${tasks || '<div class="empty">ยังไม่มีงานย่อย</div>'}</div>`}
   <h2 class="h2">ผูกไว้กับ</h2>
   <div class="grid3">${link('pin', 'สถานที่', linkedPlaces.length, linkedPlaces[0]?.name || '-', '#/records/place')}${link('person', 'คน', linkedPeople.length, linkedPeople[0]?.name || '-', '#/records/person')}${link('note', 'โน้ต', linkedNotes.length, linkedNotes[0]?.title || '-', '#/records/note')}</div>`;
@@ -450,6 +451,10 @@ function viewStats() {
 /* ---------- ตั้งค่า ---------- */
 /* มีอะไรใหม่ — ใส่เฉพาะฟีเจอร์/การเปลี่ยนแปลงใหญ่ (ไม่ต้องใส่การแก้คำ/ขนาด/สี) ใหม่สุดอยู่บน */
 const CHANGELOG = [
+  { ver: 'เวอร์ชัน 1.4', date: '27 พ.ย. 2569', items: [
+    'โปรเจกต์: ดึง to-do ลอยที่จดไว้เข้ามาเป็นงานย่อยได้',
+    'หน้าคอม: ช่องวันที่และความสำคัญในแถวเพิ่มงานมีหัวบอกว่าเป็นช่องอะไร',
+  ] },
   { ver: 'เวอร์ชัน 1.3', date: '26 พ.ย. 2569', items: [
     'สถิติ: งานที่ปิดแยกตามหมวด เช่น อินโฟกราฟิกทำไปกี่ชิ้น · ใช้ได้ทั้งมือถือและคอม · กดหมวดเพื่อดูรายการงาน',
   ] },

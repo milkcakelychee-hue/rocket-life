@@ -18,7 +18,7 @@ Edit only `src/`, then concatenate it into `app.js` (no bundler):
 ```bash
 cat src/0-map.js src/1-core.js src/2-views.js src/3-sheets.js src/4-sync.js src/5-desk.js > app.js && node --check app.js
 ```
-1. Bump `CACHE` in `sw.js` on every push (currently `rocketlife-v23`). Otherwise the iPhone keeps loading the old version.
+1. Bump `CACHE` in `sw.js` on every push (currently `rocketlife-v24`). Otherwise the iPhone keeps loading the old version.
 2. `git add -A && git commit && git push`. If the push fails with `RPC failed`, push again.
 3. Wait for the Pages run to succeed (`gh run list -L1`), then check that the live `sw.js` has the new version. A run once got a GitHub 500 and needed `gh run rerun`.
 4. Tell the user to close and reopen the app.
