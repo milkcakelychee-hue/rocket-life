@@ -18,7 +18,7 @@ Edit only `src/`, then concatenate it into `app.js` (no bundler):
 ```bash
 cat src/0-map.js src/1-core.js src/2-views.js src/3-sheets.js src/4-sync.js src/5-desk.js > app.js && node --check app.js
 ```
-1. Bump `CACHE` in `sw.js` on every push (currently `rocketlife-v19`). Otherwise the iPhone keeps loading the old version.
+1. Bump `CACHE` in `sw.js` on every push (currently `rocketlife-v23`). Otherwise the iPhone keeps loading the old version.
 2. `git add -A && git commit && git push`. If the push fails with `RPC failed`, push again.
 3. Wait for the Pages run to succeed (`gh run list -L1`), then check that the live `sw.js` has the new version. A run once got a GitHub 500 and needed `gh run rerun`.
 4. Tell the user to close and reopen the app.
@@ -72,7 +72,7 @@ cat src/0-map.js src/1-core.js src/2-views.js src/3-sheets.js src/4-sync.js src/
 - Computer: left sidebar, and a board in Today and on the project page that switches between cards, table and calendar (remembered in localStorage `rocketlife-boardview`).
   - Card columns: ต้องทำ / กำลังทำ / รอข้อมูล / รอตรวจสอบ / เสร็จแล้ว.
   - The circle on each card is a category icon, not a person (single user).
-- Theme: purple `--purple`, dark `--dark`, font IBM Plex Sans Thai Looped. Supports light and dark mode.
+- Theme: purple `--purple`, dark `--dark`, font Bai Jamjuree. Supports light and dark mode.
 - Bangkok is always highlighted on the province map (the user's workplace).
 
 ## Next steps the user has planned (not done yet)
